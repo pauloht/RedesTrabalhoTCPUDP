@@ -53,7 +53,7 @@
                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
                       <Component id="btSelecionarArquivo" max="32767" attributes="0"/>
                       <Component id="jPanel2" max="32767" attributes="0"/>
-                      <Component id="tbBaixar" max="32767" attributes="0"/>
+                      <Component id="tbLiberarArquivo" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
@@ -71,13 +71,18 @@
                   <Component id="btSelecionarArquivo" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="jPanel2" min="-2" max="-2" attributes="0"/>
-                      <Component id="pConfig" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <EmptySpace pref="108" max="32767" attributes="0"/>
-                  <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="tbBaixar" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="lbInfo" alignment="3" min="-2" pref="23" max="-2" attributes="0"/>
+                      <Group type="102" attributes="0">
+                          <Component id="jPanel2" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace pref="113" max="32767" attributes="0"/>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="tbLiberarArquivo" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="lbInfo" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
+                      <Group type="102" attributes="0">
+                          <Component id="pConfig" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      </Group>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -87,7 +92,7 @@
       <SubComponents>
         <Component class="javax.swing.JButton" name="btSelecionarArquivo">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Selecionar Pasta"/>
+            <Property name="text" type="java.lang.String" value="Selecionar Arquivo"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btSelecionarArquivoActionPerformed"/>
@@ -106,8 +111,18 @@
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
-                      <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          </Group>
+                          <Group type="102" attributes="0">
+                              <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="lbTamanhoArquivo" max="32767" attributes="0"/>
+                          </Group>
+                      </Group>
+                      <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
                   </Group>
                   <Component id="lbArquivoNome" alignment="0" max="32767" attributes="0"/>
               </Group>
@@ -118,7 +133,12 @@
                       <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lbArquivoNome" pref="49" max="32767" attributes="0"/>
-                      <EmptySpace min="-2" pref="31" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbTamanhoArquivo" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -129,23 +149,30 @@
                 <Property name="text" type="java.lang.String" value="Arquivo :"/>
               </Properties>
             </Component>
+            <Component class="javax.swing.JLabel" name="jLabel2">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Tam :"/>
+              </Properties>
+            </Component>
             <Component class="javax.swing.JLabel" name="lbArquivoNome">
               <Properties>
                 <Property name="text" type="java.lang.String" value="NULL"/>
                 <Property name="verticalAlignment" type="int" value="1"/>
               </Properties>
             </Component>
+            <Component class="javax.swing.JLabel" name="lbTamanhoArquivo">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="NULL"/>
+              </Properties>
+            </Component>
           </SubComponents>
         </Container>
-        <Component class="javax.swing.JToggleButton" name="tbBaixar">
+        <Component class="javax.swing.JToggleButton" name="tbLiberarArquivo">
           <Properties>
-            <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="ff" green="ff" red="ff" type="rgb"/>
-            </Property>
-            <Property name="text" type="java.lang.String" value="Baixar Arquivo"/>
+            <Property name="text" type="java.lang.String" value="LiberarArquivo"/>
           </Properties>
           <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="tbBaixarActionPerformed"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="tbLiberarArquivoActionPerformed"/>
           </Events>
         </Component>
         <Container class="javax.swing.JPanel" name="pConfig">
@@ -155,22 +182,13 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="tbTransporte" min="-2" pref="86" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="167" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="157" max="32767" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
-                              <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="tfIP" min="-2" pref="103" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" attributes="0">
-                              <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="tfPorta" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                      </Group>
+                      <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="tfPorta" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
@@ -184,12 +202,7 @@
                           <Component id="tfPorta" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel3" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="-2" pref="9" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="tfIP" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace pref="24" max="32767" attributes="0"/>
+                      <EmptySpace pref="46" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -215,26 +228,11 @@
                 <Property name="text" type="java.lang.String" value="Porta :"/>
               </Properties>
             </Component>
-            <Component class="javax.swing.JLabel" name="jLabel4">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="IP :"/>
-              </Properties>
-            </Component>
-            <Component class="javax.swing.JTextField" name="tfIP">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="localhost"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="tfIPActionPerformed"/>
-                <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="tfIPKeyPressed"/>
-                <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="tfIPKeyReleased"/>
-              </Events>
-            </Component>
           </SubComponents>
         </Container>
         <Component class="javax.swing.JLabel" name="lbInfo">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Nao conectado"/>
+            <Property name="text" type="java.lang.String" value="NULL"/>
           </Properties>
         </Component>
       </SubComponents>

@@ -13,18 +13,15 @@ import javax.swing.filechooser.FileNameExtensionFilter;
  *
  * @author Usuario
  */
-public class clienteFrame extends javax.swing.JFrame {
+public class servidorFrame extends javax.swing.JFrame {
     File fileBuffer = null;
     JFileChooser fcBuffer = null;
     int portaValor = 5963;
     boolean portaLock = false;
-    boolean globalLock = false;
-    boolean threadControlLock = false;
-    volatile boolean threadInterruptFlag = false;
     /**
      * Creates new form NovoJFrame
      */
-    public clienteFrame() {
+    public servidorFrame() {
         initComponents();
     }
 
@@ -41,14 +38,14 @@ public class clienteFrame extends javax.swing.JFrame {
         btSelecionarArquivo = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
         lbArquivoNome = new javax.swing.JLabel();
-        tbBaixar = new javax.swing.JToggleButton();
+        lbTamanhoArquivo = new javax.swing.JLabel();
+        tbLiberarArquivo = new javax.swing.JToggleButton();
         pConfig = new javax.swing.JPanel();
         tbTransporte = new javax.swing.JToggleButton();
         tfPorta = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        tfIP = new javax.swing.JTextField();
         lbInfo = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -56,7 +53,7 @@ public class clienteFrame extends javax.swing.JFrame {
         jPanel1.setBackground(new java.awt.Color(153, 153, 153));
         jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 3));
 
-        btSelecionarArquivo.setText("Selecionar Pasta");
+        btSelecionarArquivo.setText("Selecionar Arquivo");
         btSelecionarArquivo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btSelecionarArquivoActionPerformed(evt);
@@ -67,16 +64,27 @@ public class clienteFrame extends javax.swing.JFrame {
 
         jLabel1.setText("Arquivo :");
 
+        jLabel2.setText("Tam :");
+
         lbArquivoNome.setText("NULL");
         lbArquivoNome.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+
+        lbTamanhoArquivo.setText("NULL");
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addComponent(jLabel1)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lbTamanhoArquivo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addGap(10, 10, 10))
             .addComponent(lbArquivoNome, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel2Layout.setVerticalGroup(
@@ -85,14 +93,17 @@ public class clienteFrame extends javax.swing.JFrame {
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lbArquivoNome, javax.swing.GroupLayout.DEFAULT_SIZE, 49, Short.MAX_VALUE)
-                .addGap(31, 31, 31))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(lbTamanhoArquivo))
+                .addContainerGap())
         );
 
-        tbBaixar.setBackground(new java.awt.Color(255, 255, 255));
-        tbBaixar.setText("Baixar Arquivo");
-        tbBaixar.addActionListener(new java.awt.event.ActionListener() {
+        tbLiberarArquivo.setText("LiberarArquivo");
+        tbLiberarArquivo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                tbBaixarActionPerformed(evt);
+                tbLiberarArquivoActionPerformed(evt);
             }
         });
 
@@ -115,41 +126,18 @@ public class clienteFrame extends javax.swing.JFrame {
 
         jLabel3.setText("Porta :");
 
-        jLabel4.setText("IP :");
-
-        tfIP.setText("localhost");
-        tfIP.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                tfIPActionPerformed(evt);
-            }
-        });
-        tfIP.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                tfIPKeyPressed(evt);
-            }
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                tfIPKeyReleased(evt);
-            }
-        });
-
         javax.swing.GroupLayout pConfigLayout = new javax.swing.GroupLayout(pConfig);
         pConfig.setLayout(pConfigLayout);
         pConfigLayout.setHorizontalGroup(
             pConfigLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pConfigLayout.createSequentialGroup()
                 .addComponent(tbTransporte, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 167, Short.MAX_VALUE))
+                .addGap(0, 157, Short.MAX_VALUE))
             .addGroup(pConfigLayout.createSequentialGroup()
                 .addGap(2, 2, 2)
-                .addGroup(pConfigLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pConfigLayout.createSequentialGroup()
-                        .addComponent(jLabel4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(tfIP, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(pConfigLayout.createSequentialGroup()
-                        .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(tfPorta, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addComponent(jLabel3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tfPorta, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         pConfigLayout.setVerticalGroup(
@@ -160,14 +148,10 @@ public class clienteFrame extends javax.swing.JFrame {
                 .addGroup(pConfigLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(tfPorta, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel3))
-                .addGap(9, 9, 9)
-                .addGroup(pConfigLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
-                    .addComponent(tfIP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(24, Short.MAX_VALUE))
+                .addContainerGap(46, Short.MAX_VALUE))
         );
 
-        lbInfo.setText("Nao conectado");
+        lbInfo.setText("NULL");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -178,7 +162,7 @@ public class clienteFrame extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(btSelecionarArquivo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(tbBaixar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(tbLiberarArquivo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(pConfig, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -192,12 +176,15 @@ public class clienteFrame extends javax.swing.JFrame {
                 .addComponent(btSelecionarArquivo)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(pConfig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 108, Short.MAX_VALUE)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(tbBaixar)
-                    .addComponent(lbInfo, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 113, Short.MAX_VALUE)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(tbLiberarArquivo)
+                            .addComponent(lbInfo)))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(pConfig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -217,17 +204,18 @@ public class clienteFrame extends javax.swing.JFrame {
 
     private void limparGui(){
         lbArquivoNome.setText("NULL");
+        lbTamanhoArquivo.setText("NULL");
     }
     
     private void btSelecionarArquivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btSelecionarArquivoActionPerformed
         // TODO add your handling code here:
         this.setVisible(true);
-
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("BMP","bmp","arquivo bmp");
         if (fcBuffer==null)
         {
             fcBuffer = new JFileChooser();
-            fcBuffer.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         }
+        fcBuffer.setFileFilter(filter);
         
         int returnVal = fcBuffer.showOpenDialog(this);
         
@@ -235,7 +223,26 @@ public class clienteFrame extends javax.swing.JFrame {
             if (returnVal == JFileChooser.APPROVE_OPTION)
             {
                 fileBuffer = fcBuffer.getSelectedFile();
+                long tamanho = fileBuffer.length();
+                String texto = "";
+                double tamanhoKb = (tamanho+0.0)/1024.0;
+                if (tamanhoKb > 1.0){
+                    double tamanhoMb = tamanhoKb/1024.0;
+                    if (tamanhoMb > 1.0){
+                        double tamanhoGb = tamanhoMb/1024.0;
+                        if (tamanhoGb > 1.0){
+                            texto = String.format("%.2f GB",tamanhoGb);
+                        }else{
+                            texto = String.format("%.2f MB",tamanhoMb);
+                        }
+                    }else{
+                        texto = String.format("%.2f KB",tamanhoKb);
+                    }
+                }else{
+                    texto = Long.toString(tamanho)+" B";
+                }
                 lbArquivoNome.setText(fileBuffer.getName());
+                lbTamanhoArquivo.setText(texto);
             }
             else
             {
@@ -289,63 +296,31 @@ public class clienteFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_tfPortaKeyReleased
 
-    private void iniciarConexaoServidor(){
-        ConexaoTCP conex = new ConexaoTCP();
-        Thread t1 = new Thread(){
-            boolean ocorreuErro = false;
+    private void enviarArquivo(){
+       Thread t1 = new Thread(){
+            @Override
             public void run(){
-                try{
-                    conex.solicitarPedido(tfIP.getText(), portaValor, fileBuffer, threadInterruptFlag);
-                }catch(Exception e){
-                    lbInfo.setText("Erro!");
-                    e.printStackTrace();
-                    ocorreuErro = true;
-                }finally{
-                    threadControlLock = false;
-                    if (!ocorreuErro){
-                        lbInfo.setText("Download concluido!");
-                    }
-                }
+                ConexaoTCP conex = new ConexaoTCP();
+                conex.ouvirPedidos(portaValor, fileBuffer);
             }
         };
-        threadControlLock = true;
-        t1.start();
+        t1.start(); 
     }
     
-    private void mudarEstadoDeInterface(){
-        boolean decisor = tbBaixar.isSelected();
-        if (decisor){
-            tbBaixar.setText("Parar download");
-            iniciarConexaoServidor();
-        }else{
-            tbBaixar.setText("Baixando");
-        }
-        globalLock = decisor;
-        btSelecionarArquivo.setEnabled(!decisor);
-        tfIP.setEditable(!decisor);
-        tfPorta.setEditable(!decisor);
-    }
-    
-    private void tbBaixarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbBaixarActionPerformed
+    private void tbLiberarArquivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbLiberarArquivoActionPerformed
         // TODO add your handling code here:
         if (!(fileBuffer==null)){
-            mudarEstadoDeInterface();
+            lbInfo.setText("Enviando arquivo!");
+            boolean decisao = tbLiberarArquivo.isSelected();
+            tfPorta.setEditable(decisao);
+            btSelecionarArquivo.setEnabled(decisao);
+            if (decisao){
+                enviarArquivo();
+            }
         }else{
-            lbInfo.setText("Erro!, pasta nao selecionada!");
+            lbInfo.setText("Erro!, arquivo nulo!");
         }
-    }//GEN-LAST:event_tbBaixarActionPerformed
-
-    private void tfIPActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tfIPActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_tfIPActionPerformed
-
-    private void tfIPKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tfIPKeyPressed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_tfIPKeyPressed
-
-    private void tfIPKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tfIPKeyReleased
-        // TODO add your handling code here:
-    }//GEN-LAST:event_tfIPKeyReleased
+    }//GEN-LAST:event_tbLiberarArquivoActionPerformed
 
     /**
      * @param args the command line arguments
@@ -364,20 +339,23 @@ public class clienteFrame extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(clienteFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(servidorFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(clienteFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(servidorFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(clienteFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(servidorFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(clienteFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(servidorFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
         //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new clienteFrame().setVisible(true);
+                new servidorFrame().setVisible(true);
             }
         });
     }
@@ -385,16 +363,16 @@ public class clienteFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btSelecionarArquivo;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JLabel lbArquivoNome;
     private javax.swing.JLabel lbInfo;
+    private javax.swing.JLabel lbTamanhoArquivo;
     private javax.swing.JPanel pConfig;
-    private javax.swing.JToggleButton tbBaixar;
+    private javax.swing.JToggleButton tbLiberarArquivo;
     private javax.swing.JToggleButton tbTransporte;
-    private javax.swing.JTextField tfIP;
     private javax.swing.JTextField tfPorta;
     // End of variables declaration//GEN-END:variables
 }
