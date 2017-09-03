@@ -5,6 +5,7 @@
  */
 package redetcpudptrabalho;
 
+import java.awt.Color;
 import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -18,6 +19,7 @@ public class servidorFrame extends javax.swing.JFrame {
     JFileChooser fcBuffer = null;
     int portaValor = 5963;
     boolean portaLock = false;
+    boolean usarTCP = true;
     /**
      * Creates new form NovoJFrame
      */
@@ -108,6 +110,11 @@ public class servidorFrame extends javax.swing.JFrame {
         });
 
         tbTransporte.setText("TCP");
+        tbTransporte.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tbTransporteActionPerformed(evt);
+            }
+        });
 
         tfPorta.setText("5963");
         tfPorta.addActionListener(new java.awt.event.ActionListener() {
@@ -297,30 +304,58 @@ public class servidorFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_tfPortaKeyReleased
 
     private void enviarArquivo(){
-       Thread t1 = new Thread(){
-            @Override
-            public void run(){
-                ConexaoTCP conex = new ConexaoTCP();
-                conex.ouvirPedidos(portaValor, fileBuffer);
-            }
-        };
-        t1.start(); 
+        if (usarTCP){
+            Thread t1 = new Thread(){
+                 @Override
+                 public void run(){
+                     ConexaoTCP conex = new ConexaoTCP();
+                     conex.ouvirPedidos(portaValor, fileBuffer);
+                 }
+             };
+             t1.start(); 
+        }else{
+            Thread t1 = new Thread(){
+                 @Override
+                 public void run(){
+                     ConexaoUDP conex = new ConexaoUDP();
+                     conex.ouvirPedidos(fileBuffer);
+                 }
+             };
+             t1.start(); 
+        }
     }
     
     private void tbLiberarArquivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbLiberarArquivoActionPerformed
         // TODO add your handling code here:
         if (!(fileBuffer==null)){
-            lbInfo.setText("Enviando arquivo!");
             boolean decisao = tbLiberarArquivo.isSelected();
             tfPorta.setEditable(decisao);
             btSelecionarArquivo.setEnabled(decisao);
             if (decisao){
+                lbInfo.setText("Enviando arquivo!");
                 enviarArquivo();
+            }else{
+                lbInfo.setText("Envio cancelado.");
             }
         }else{
             lbInfo.setText("Erro!, arquivo nulo!");
+            tbLiberarArquivo.setSelected(false);
         }
     }//GEN-LAST:event_tbLiberarArquivoActionPerformed
+
+    private void tbTransporteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbTransporteActionPerformed
+        // TODO add your handling code here:
+        usarTCP = !(tbTransporte.isSelected());
+        if (usarTCP){
+            tbTransporte.setText("TCP");
+            tfPorta.setEditable(true);
+            tfPorta.setBackground(Color.WHITE);
+        }else{
+            tbTransporte.setText("UDP");
+            tfPorta.setEditable(false);
+            tfPorta.setBackground(Color.BLACK);
+        }
+    }//GEN-LAST:event_tbTransporteActionPerformed
 
     /**
      * @param args the command line arguments

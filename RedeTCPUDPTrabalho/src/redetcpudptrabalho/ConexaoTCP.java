@@ -102,12 +102,10 @@ public class ConexaoTCP {
             byte[] tamNome = new byte[4];
             in.read(tamNome);
             int tamanhoNomeArquivo = java.nio.ByteBuffer.wrap(tamNome).getInt();
-            System.out.println("tamanho lido : " + tamanhoNomeArquivo);
             //leitura de nome do arquivo
             byte[] nomeArquivo = new byte[tamanhoNomeArquivo];
             in.read(nomeArquivo);
             String nome = new String(nomeArquivo);
-            System.out.println("nome arquivo = "+nome+",tam="+nome.length());
             File newFile = new File(destino,nome);
             out = new BufferedOutputStream(new FileOutputStream(newFile));
             //leitura de dados
@@ -118,7 +116,7 @@ public class ConexaoTCP {
                 bytesRead = in.read(linhaLida);
                 if (bytesRead>0){
                     out.write(linhaLida, 0, bytesRead);
-                    System.out.println("lendo linha "+contador);
+                    //System.out.println("lendo linha "+contador);
                     contador++;
                 }
             }while(bytesRead > -1);
@@ -168,7 +166,7 @@ public class ConexaoTCP {
                 while (true){
                     bytesLidos = bInput.read(linhaLida);
                     if (bytesLidos>0){
-                    out.write(linhaLida);
+                    out.write(linhaLida,0,bytesLidos);
                     }else{
                         break;
                     }

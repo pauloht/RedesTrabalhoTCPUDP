@@ -5,6 +5,7 @@
  */
 package redetcpudptrabalho;
 
+import java.awt.Color;
 import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -21,6 +22,7 @@ public class clienteFrame extends javax.swing.JFrame {
     boolean globalLock = false;
     boolean threadControlLock = false;
     volatile boolean threadInterruptFlag = false;
+    boolean usarTCP = true;
     /**
      * Creates new form NovoJFrame
      */
@@ -97,6 +99,11 @@ public class clienteFrame extends javax.swing.JFrame {
         });
 
         tbTransporte.setText("TCP");
+        tbTransporte.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tbTransporteActionPerformed(evt);
+            }
+        });
 
         tfPorta.setText("5963");
         tfPorta.addActionListener(new java.awt.event.ActionListener() {
@@ -290,26 +297,57 @@ public class clienteFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_tfPortaKeyReleased
 
     private void iniciarConexaoServidor(){
-        ConexaoTCP conex = new ConexaoTCP();
-        Thread t1 = new Thread(){
-            boolean ocorreuErro = false;
-            public void run(){
-                try{
-                    conex.solicitarPedido(tfIP.getText(), portaValor, fileBuffer, threadInterruptFlag);
-                }catch(Exception e){
-                    lbInfo.setText("Erro!");
-                    e.printStackTrace();
-                    ocorreuErro = true;
-                }finally{
-                    threadControlLock = false;
-                    if (!ocorreuErro){
-                        lbInfo.setText("Download concluido!");
+        lbInfo.setText("Downloading...");
+        if (usarTCP){
+            ConexaoTCP conex = new ConexaoTCP();
+            Thread t1 = new Thread(){
+                boolean ocorreuErro = false;
+                public void run(){
+                    try{
+                        conex.solicitarPedido(tfIP.getText(), portaValor, fileBuffer, threadInterruptFlag);
+                    }catch(Exception e){
+                        lbInfo.setText("Erro!");
+                        e.printStackTrace();
+                        ocorreuErro = true;
+                    }finally{
+                        threadControlLock = false;
+                        if (!ocorreuErro){
+                            lbInfo.setText("Download concluido!");
+                        }
                     }
                 }
-            }
-        };
-        threadControlLock = true;
-        t1.start();
+            };
+            threadControlLock = true;
+            t1.start();
+        }else{
+            ConexaoUDP conex = new ConexaoUDP();
+            Thread t1 = new Thread(){
+                boolean ocorreuErro = false;
+                public void run(){
+                    try{
+                        int resposta = conex.solicitarPedido(tfIP.getText(), fileBuffer, threadInterruptFlag);
+                        if (resposta==0){//nao ocorreu erro
+                            
+                        }else if(resposta==-1){//timeout
+                            lbInfo.setText("Timeout!");
+                            ocorreuErro = true;
+                        }else{
+                            lbInfo.setText("Erro!");//outroerro
+                            ocorreuErro = true;
+                        }
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }finally{
+                        threadControlLock = false;
+                        if (!ocorreuErro){
+                            lbInfo.setText("Download concluido!");
+                        }
+                    }
+                }
+            };
+            threadControlLock = true;
+            t1.start();
+        }
     }
     
     private void mudarEstadoDeInterface(){
@@ -318,7 +356,7 @@ public class clienteFrame extends javax.swing.JFrame {
             tbBaixar.setText("Parar download");
             iniciarConexaoServidor();
         }else{
-            tbBaixar.setText("Baixando");
+            tbBaixar.setText("Baixar Arquivo");
         }
         globalLock = decisor;
         btSelecionarArquivo.setEnabled(!decisor);
@@ -332,6 +370,7 @@ public class clienteFrame extends javax.swing.JFrame {
             mudarEstadoDeInterface();
         }else{
             lbInfo.setText("Erro!, pasta nao selecionada!");
+            tbBaixar.setSelected(false);
         }
     }//GEN-LAST:event_tbBaixarActionPerformed
 
@@ -346,6 +385,20 @@ public class clienteFrame extends javax.swing.JFrame {
     private void tfIPKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tfIPKeyReleased
         // TODO add your handling code here:
     }//GEN-LAST:event_tfIPKeyReleased
+
+    private void tbTransporteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbTransporteActionPerformed
+        // TODO add your handling code here:
+        usarTCP = !(tbTransporte.isSelected());
+        if (usarTCP){
+            tbTransporte.setText("TCP");
+            tfPorta.setEditable(true);
+            tfPorta.setBackground(Color.WHITE);
+        }else{
+            tbTransporte.setText("UDP");
+            tfPorta.setEditable(false);
+            tfPorta.setBackground(Color.BLACK);
+        }
+    }//GEN-LAST:event_tbTransporteActionPerformed
 
     /**
      * @param args the command line arguments
