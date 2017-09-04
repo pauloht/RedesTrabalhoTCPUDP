@@ -294,6 +294,13 @@ public class ConexaoUDP {
                         int idPacote = java.nio.ByteBuffer.wrap(idPacoteB).getInt();
                         if (idPacote == -1){
                             System.out.println("fim!");
+                            for (int i=0;i<indicacaoDeRecebimento.length;i++){
+                                if (indicacaoDeRecebimento[i]){
+                                    out.write(bufferDeRecebimento[i],4,1020);
+                                }else{
+                                    break;
+                                }
+                            }
                             break;
                         }else{
                             int valorMovido = idPacote-maximo+10;
