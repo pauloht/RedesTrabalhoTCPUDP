@@ -104,7 +104,8 @@ public class ConexaoUDP {
                     }
                     DatagramPacket primeiroPacket = new DatagramPacket(pacoteCumprimento, pacoteCumprimento.length, ipSolicitante, 9876);
                     clientSocket.send(primeiroPacket);
-                    
+                    int bufferMaxSize = 1024;
+                    int quantosBuffers = 10;
                     
                     //comecar a enviar arquivo para ip solicitante(nova thread)
                     Thread t1 = new Thread(){
@@ -118,48 +119,37 @@ public class ConexaoUDP {
                                 int bytesLidos = 0;
                                 BufferedInputStream bInput = new BufferedInputStream(new FileInputStream(file));
                                 int numeroDePacote = 0;
-                                int numeroCorrente = 10;
                                 byte[][] bufferDePacote = new byte[10][1024];
+                                int[] tamanhoReal = new int[10];
                                 int contadorDeEnvio = 0;
                                 threadServerSocket.setSoTimeout(1000);
+                                int repeticoesFIN = 3;
+                                boolean arquivoLido = false;
                                 while (true){
-                                    if (contadorDeEnvio<10){
+                                    if (contadorDeEnvio<10 && (!arquivoLido)){
                                         bytesLidos = bInput.read(bufferDePacote[contadorDeEnvio],4,1020);
-                                        contadorDeEnvio = contadorDeEnvio+1;
                                         if (bytesLidos>0){
+                                            contadorDeEnvio = contadorDeEnvio+1;
                                             wrapped.clear();
                                             wrapped.putInt(numeroDePacote);
                                             byte[] idPacote;
                                             idPacote = wrapped.array();
+                                            tamanhoReal[contadorDeEnvio-1] = bytesLidos;
                                             bufferDePacote[contadorDeEnvio-1][0] = idPacote[0];
                                             bufferDePacote[contadorDeEnvio-1][1] = idPacote[1];
                                             bufferDePacote[contadorDeEnvio-1][2] = idPacote[2];
                                             bufferDePacote[contadorDeEnvio-1][3] = idPacote[3];
-                                            DatagramPacket dataPacket = new DatagramPacket(bufferDePacote[contadorDeEnvio-1], bufferDePacote[contadorDeEnvio-1].length, ipSolicitante, 9876);
+                                            DatagramPacket dataPacket = new DatagramPacket(bufferDePacote[contadorDeEnvio-1], tamanhoReal[contadorDeEnvio-1]+4, ipSolicitante, 9876);
                                             clientSocket.send(dataPacket);
-                                            System.out.println("enviando pacote : " + numeroDePacote);
+                                            System.out.println("enviando pacote : " + numeroDePacote+",count["+(contadorDeEnvio-1)+"] tam : " + bytesLidos);
                                             numeroDePacote = numeroDePacote + 1;
-                                        }else{//bytes lidos <0
-                                            //espera
-                                            
-                                            //enviar datagrama de fim de conexao
-                                            wrapped.clear();
-                                            wrapped.putInt(-1);
-                                            byte[] idPacote;
-                                            idPacote = wrapped.array();
-                                            bufferDePacote[contadorDeEnvio-1][0] = idPacote[0];
-                                            bufferDePacote[contadorDeEnvio-1][1] = idPacote[1];
-                                            bufferDePacote[contadorDeEnvio-1][2] = idPacote[2];
-                                            bufferDePacote[contadorDeEnvio-1][3] = idPacote[3];
-                                            DatagramPacket dataPacket = new DatagramPacket(bufferDePacote[contadorDeEnvio-1], bufferDePacote[contadorDeEnvio-1].length, ipSolicitante, 9876);
-                                            clientSocket.send(dataPacket);
-                                            System.out.println("fim!");
-                                            break;
+                                        }else{//bytes lidos <0, so eh prescisso confirmar o envio dos pacotes e terminar conexao
+                                            arquivoLido = true;
                                         }
                                     }else{//espera resposta do cliente(se ele recebeu todos os pacotes ou prescissa retransmitir
                                         try{
                                             threadServerSocket.receive(retransmissaoPacket);
-                                            byte[] codigo = new byte[3];//codigo ACK -> Sucesso nos pacotes ou NCK - erro seguido de lista de pacotes que prescissam retransmissao
+                                            byte[] codigo = new byte[3];//codigo ACK -> Sucesso nos pacotes ou NCK - erro seguido de lista de pacotes que prescissam retransmissao ou FIN - fim da conexao
                                             codigo[0] = retransmissaoBytes[0];
                                             codigo[1] = retransmissaoBytes[1];
                                             codigo[2] = retransmissaoBytes[2];
@@ -168,24 +158,60 @@ public class ConexaoUDP {
                                                 contadorDeEnvio = 0;
                                             }else if(sCod.equals("NCK")){//prescissa retransmitir x pacotes
                                                 byte[] bInt = new byte[4];
-                                                for (int i=0;i<4;i++){
-                                                    bInt[i] = retransmissaoBytes[3+i];
-                                                }
+                                                System.arraycopy(retransmissaoBytes, 3, bInt, 0, 4);
                                                 int numeroDePacotesPerdidos = ByteBuffer.wrap(bInt).getInt();
+                                                System.out.println("Numero retransmitido : " + numeroDePacotesPerdidos);
                                                 int[] indicesRetransmitidos = new int[numeroDePacotesPerdidos];
                                                 for (int i=0;i<numeroDePacotesPerdidos;i++){
                                                     byte[] valorI = new byte[4];
-                                                    for (int j=0;j<4;j++){
-                                                        valorI[j] = retransmissaoBytes[7+i*4];
-                                                    }
+                                                    System.out.println("lendo byte da pos inicial : " + (7+i*4));
+                                                    System.arraycopy(retransmissaoBytes, 7+i*4, valorI, 0, 4);
                                                     indicesRetransmitidos[i] = ByteBuffer.wrap(valorI).getInt();
-                                                    System.out.println("prescissa retransmitir : "+indicesRetransmitidos[i]);
                                                 }
                                                 for (int i=0;i<indicesRetransmitidos.length;i++){
-                                                    byte[] pacote = bufferDePacote[indicesRetransmitidos[i]];
-                                                    DatagramPacket dataPacket = new DatagramPacket(pacote, pacote.length, ipSolicitante, 9876);
-                                                    clientSocket.send(dataPacket);
+                                                    if (indicesRetransmitidos[i]<contadorDeEnvio){//retransmissao valida
+                                                        byte[] pacote = bufferDePacote[indicesRetransmitidos[i]];
+                                                        int tamanho = tamanhoReal[indicesRetransmitidos[i]];
+                                                        System.out.println("prescissa retransmitir : "+indicesRetransmitidos[i]+",contadorDeEnvio="+contadorDeEnvio+"tamanho="+tamanho);
+                                                        DatagramPacket dataPacket = new DatagramPacket(pacote, tamanho+4, ipSolicitante, 9876);
+                                                        clientSocket.send(dataPacket);
+                                                    }else{//retransmissao invalida
+                                                        System.out.println("retransmissao invalida!="+indicesRetransmitidos[i]);
+                                                        wrapped.clear();
+                                                        wrapped.putInt(-1);
+                                                        byte[] idPacote;
+                                                        idPacote = wrapped.array();
+                                                        System.arraycopy(idPacote, 0, bufferDePacote[contadorDeEnvio-1], 0, 4);
+                                                        wrapped.clear();
+                                                        wrapped.putInt(contadorDeEnvio-1);
+                                                        idPacote = wrapped.array();
+                                                        System.arraycopy(idPacote, 0, bufferDePacote[contadorDeEnvio-1], 4, 4);
+                                                        DatagramPacket dataPacket = new DatagramPacket(bufferDePacote[contadorDeEnvio-1], bufferDePacote[contadorDeEnvio-1].length, ipSolicitante, 9876);
+                                                        clientSocket.send(dataPacket);
+                                                    }
                                                 }
+                                            }
+                                            else if(sCod.equals("FIN")){//confirmacao de fim de transmissao
+                                                System.out.println("FIN recebido!");
+                                                break;
+                                            }else{
+                                                System.out.println("Codigo nao identificado = " + sCod);
+                                            }
+                                            if (arquivoLido){
+                                                //enviar datagrama de fim de conexao
+                                                wrapped.clear();
+                                                wrapped.putInt(-1);
+                                                byte[] idPacote;
+                                                idPacote = wrapped.array();
+                                                System.arraycopy(idPacote, 0, bufferDePacote[contadorDeEnvio-1], 0, 4);
+                                                wrapped.clear();
+                                                wrapped.putInt(-1);
+                                                idPacote = wrapped.array();
+                                                System.arraycopy(idPacote, 0, bufferDePacote[contadorDeEnvio-1], 4, 4);
+                                                DatagramPacket dataPacket = new DatagramPacket(bufferDePacote[contadorDeEnvio-1], bufferDePacote[contadorDeEnvio-1].length, ipSolicitante, 9876);
+                                                clientSocket.send(dataPacket);
+                                                System.out.println("fim thread server!");
+                                                break;
                                             }
                                         }catch(SocketTimeoutException e){
                                             //cliente desconectado?
@@ -270,7 +296,7 @@ public class ConexaoUDP {
                 //
                 boolean[] indicacaoDeRecebimento = new boolean[10];
                 byte[][] bufferDeRecebimento = new byte[10][1024];
-                
+                int[] tamanhoReal = new int[10];
                 
                 for (int i=0;i<indicacaoDeRecebimento.length;i++){
                     indicacaoDeRecebimento[i] = false;
@@ -282,34 +308,63 @@ public class ConexaoUDP {
                 DatagramPacket pacoteDeAck = new DatagramPacket(ackByte, ackByte.length, ipServidor, 5678);
                 byte[] ack = "ACK".getBytes();
                 byte[] nck = "NCK".getBytes();
+                byte[] fin = "FIN".getBytes();
                 ByteBuffer wrapper = ByteBuffer.allocate(4);
+                int contadorDeRetransmissoes = 0;
+                int maxNumeroDeRetransmissaoDeAcks = 3;
+                boolean nackMontado = false;
+                serverSocket.setSoTimeout(100);
+                int tamanhoRecebido = 0;
+                int fimDeArquivoUltimoBuffer = 0;
+                int tamanhoAcumulado = 0;
                 while (true){ // recebe pacotes até receber pacote com numero -1
                     try{
                         serverSocket.receive(receivePacket);
-                        estadoFinal = false;
+                        tamanhoRecebido = receivePacket.getLength()-4;
+                        contadorDeRetransmissoes = 0;
+                        nackMontado = false;
                         byte[] idPacoteB = new byte[4];
-                        for (int i=0;i<4;i++){
-                            idPacoteB[i] = receiveData[i];
-                        }
+                        System.arraycopy(receiveData, 0, idPacoteB, 0, 4);
                         int idPacote = java.nio.ByteBuffer.wrap(idPacoteB).getInt();
                         if (idPacote == -1){
-                            System.out.println("fim!");
-                            for (int i=0;i<indicacaoDeRecebimento.length;i++){
-                                if (indicacaoDeRecebimento[i]){
-                                    out.write(bufferDeRecebimento[i],4,1020);
+                            System.arraycopy(receiveData,4, idPacoteB, 0, 4);
+                            int numeroDePacotesRestantes = ByteBuffer.wrap(idPacoteB).getInt();
+                            if (numeroDePacotesRestantes==-1){
+                                System.out.println("fin");
+                                out.flush();
+                                System.arraycopy(fin, 0, ackByte, 0, ack.length);
+                                clientSocket.send(pacoteDeAck);
+                                break;
+                            }else{ //retransmissao invalida
+                                fimDeArquivoUltimoBuffer = numeroDePacotesRestantes;
+                                System.out.println("Ja recebeu todos os pacotes necessarios");
+                                if (numeroRecebido>=fimDeArquivoUltimoBuffer){
+                                        //ja recebeu os ultimos pacotes, so prescissa escreve-los
+                                        for (int i=0;i<indicacaoDeRecebimento.length;i++){
+                                            indicacaoDeRecebimento[i] = false;
+                                        }
+                                        System.out.println("escrevendo ultimos "+(fimDeArquivoUltimoBuffer+1)+" pacotes.");
+                                        for (int i=0;i<=fimDeArquivoUltimoBuffer;i++){
+                                            out.write(bufferDeRecebimento[i],4,tamanhoReal[i]);
+                                            tamanhoAcumulado = tamanhoAcumulado+tamanhoReal[i];
+                                        }
+                                        System.arraycopy(fin, 0, ackByte, 0, ack.length);
+                                        clientSocket.send(pacoteDeAck);
+                                        out.flush();
+                                        break;
                                 }else{
-                                    break;
+                                    System.out.println("fim="+fimDeArquivoUltimoBuffer+",buffer="+numeroRecebido);
                                 }
                             }
-                            break;
                         }else{
                             int valorMovido = idPacote-maximo+10;
                             if (valorMovido>=10 || valorMovido<0){
                                 System.out.println("id invalido "+idPacote);
                             }else{
                                 if (!(indicacaoDeRecebimento[valorMovido])){ //pacote ainda nao foi recebido
-                                    System.out.println("recebeu " + valorMovido + ",id="+idPacote);
+                                    System.out.println("recebeu " + valorMovido + ",id="+idPacote+",tam="+tamanhoRecebido);
                                     System.arraycopy(receiveData, 0, bufferDeRecebimento[valorMovido], 0, 1024);
+                                    tamanhoReal[valorMovido] = tamanhoRecebido;
                                     indicacaoDeRecebimento[valorMovido] = true;//sinaliza recebimento
                                     numeroRecebido = numeroRecebido+1;
                                     if (numeroRecebido>=10){
@@ -319,7 +374,8 @@ public class ConexaoUDP {
                                         }
                                         System.out.println("escrevendo 10 pacotes");
                                         for (int i=0;i<indicacaoDeRecebimento.length;i++){
-                                            out.write(bufferDeRecebimento[i],4,1020);
+                                            out.write(bufferDeRecebimento[i],4,tamanhoReal[i]);
+                                            tamanhoAcumulado = tamanhoAcumulado+tamanhoReal[i];
                                         }
                                         numeroRecebido = 0;
                                         maximo = maximo+10;
@@ -327,51 +383,50 @@ public class ConexaoUDP {
                                         clientSocket.send(pacoteDeAck);
                                     }
                                 }
-                                System.out.println("recebeu pacote "+idPacote);
                             }
                         }
                     }catch(SocketTimeoutException e){
                         if (estadoFinal){
                             throw e;
                         }else{
-                            estadoFinal = true;
-                            //pedir retransmissao de pacotes nao encontrados
-                            for (int i=0;i<nck.length;i++){
-                                ackByte[i] = nck[i];
+                            contadorDeRetransmissoes = contadorDeRetransmissoes+1;
+                            if (contadorDeRetransmissoes>=maxNumeroDeRetransmissaoDeAcks){
+                                estadoFinal = true;
                             }
-                            int pacotesRestante = 10-numeroRecebido;
-                            System.out.println("ainda faltam "+pacotesRestante);
-                            wrapper.clear();
-                            wrapper.putInt(pacotesRestante);
-                            byte[] pacotesR = wrapper.array();
-                            for (int i=0;i<pacotesR.length;i++){
-                                ackByte[i+nck.length] = pacotesR[i];
-                            }
-                            int count = 0;
-                            for (int i=0;i<indicacaoDeRecebimento.length;i++){
-                                if (!(indicacaoDeRecebimento[i])){
-                                    System.out.println("falta pacote " + i);
-                                    wrapper.clear();
-                                    wrapper.putInt(i);
-                                    byte[] array = wrapper.array();
-                                    for (int j=0;j<array.length;j++){
-                                        ackByte[j+nck.length+pacotesR.length+count*4] = array[j]; 
+                            if (!(nackMontado)){//monta pacote NCK
+                                //pedir retransmissao de pacotes nao encontrados
+                                System.arraycopy(nck, 0, ackByte, 0, nck.length);
+                                int pacotesRestante = 10-numeroRecebido;
+                                System.out.println("ainda faltam "+pacotesRestante);
+                                wrapper.clear();
+                                wrapper.putInt(pacotesRestante);
+                                byte[] pacotesR = wrapper.array();
+                                System.arraycopy(pacotesR, 0, ackByte, nck.length, pacotesR.length);
+                                int count = 0;
+                                for (int i=0;i<indicacaoDeRecebimento.length;i++){
+                                    if (!(indicacaoDeRecebimento[i])){
+                                        System.out.println("falta pacote " + i);
+                                        wrapper.clear();
+                                        wrapper.putInt(i);
+                                        byte[] array = wrapper.array();
+                                        System.out.println("gravando int na pos inicial : " + (nck.length+pacotesR.length+count*4) + ",valor = " + ByteBuffer.wrap(array).getInt());
+                                        System.arraycopy(array,0,ackByte,nck.length+pacotesR.length+count*4,array.length);
+                                        count = count+1;
                                     }
                                 }
+                                clientSocket.send(pacoteDeAck);
+                                nackMontado = true;
+                            }else{
+                                System.out.println("retransmitindo nack");
+                                clientSocket.send(pacoteDeAck);
                             }
-                            clientSocket.send(pacoteDeAck);
                         }
+                    }
+                    finally{
+                        System.out.println("tamanho escrito = " + tamanhoAcumulado);
                     }
                 }
             }
-            /*
-            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
-            clientSocket.send(sendPacket);
-            DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-            clientSocket.receive(receivePacket);
-            String modifiedSentence = new String(receivePacket.getData());
-            System.out.println("FROM SERVER:" + modifiedSentence);
-            */
             clientSocket.close();
             return(0);
         }catch(SocketTimeoutException e){
