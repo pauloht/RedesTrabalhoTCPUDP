@@ -146,8 +146,12 @@ public class servidorFrame extends javax.swing.JFrame {
 
         jLabel5.setText("TamanhoBuffers :");
 
-        tfTamanhoBuffers.setBackground(new java.awt.Color(0, 0, 0));
         tfTamanhoBuffers.setText("1024");
+        tfTamanhoBuffers.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tfTamanhoBuffersActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout pConfigLayout = new javax.swing.GroupLayout(pConfig);
         pConfig.setLayout(pConfigLayout);
@@ -262,11 +266,11 @@ public class servidorFrame extends javax.swing.JFrame {
                 long tamanho = fileBuffer.length();
                 String texto = "";
                 double tamanhoKb = (tamanho+0.0)/1024.0;
-                if (tamanhoKb > 1.0){
+                if (tamanhoKb >= 1.0){
                     double tamanhoMb = tamanhoKb/1024.0;
-                    if (tamanhoMb > 1.0){
+                    if (tamanhoMb >= 1.0){
                         double tamanhoGb = tamanhoMb/1024.0;
-                        if (tamanhoGb > 1.0){
+                        if (tamanhoGb >= 1.0){
                             texto = String.format("%.2f GB",tamanhoGb);
                         }else{
                             texto = String.format("%.2f MB",tamanhoMb);
@@ -340,7 +344,7 @@ public class servidorFrame extends javax.swing.JFrame {
                      @Override
                      public void run(){
                          ConexaoTCP conex = new ConexaoTCP();
-                         conex.ouvirPedidos(portaValor, fileBuffer);
+                         conex.ouvirPedidos(portaValor, fileBuffer,tamanhoBuffers);
                      }
                  };
             }else{
@@ -375,9 +379,9 @@ public class servidorFrame extends javax.swing.JFrame {
                 erro = true;
                 return;
             }
-            if (tamanhoBuffers<=127){
-                tfTamanhoBuffers.setText("128");
-                lbInfo.setText("TamanhoBuffers deve ser maior que 127");
+            if (tamanhoBuffers<100){
+                tfTamanhoBuffers.setText("100");
+                lbInfo.setText("TamanhoBuffers deve ser maior que 99");
                 erro = true;
                 return;
             }
@@ -418,21 +422,25 @@ public class servidorFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
         usarTCP = !(tbTransporte.isSelected());
         tfQuantiaBuffers.setEditable(!usarTCP);
-        tfTamanhoBuffers.setEditable(!usarTCP);
+        //tfTamanhoBuffers.setEditable(!usarTCP);
         if (usarTCP){
             tbTransporte.setText("TCP");
             tfPorta.setEditable(true);
             tfPorta.setBackground(Color.WHITE);
             tfQuantiaBuffers.setBackground(Color.BLACK);
-            tfTamanhoBuffers.setBackground(Color.BLACK);
+            //tfTamanhoBuffers.setBackground(Color.BLACK);
         }else{
             tbTransporte.setText("UDP");
             tfPorta.setEditable(false);
             tfPorta.setBackground(Color.BLACK);
             tfQuantiaBuffers.setBackground(Color.WHITE);
-            tfTamanhoBuffers.setBackground(Color.WHITE);
+            //tfTamanhoBuffers.setBackground(Color.WHITE);
         }
     }//GEN-LAST:event_tbTransporteActionPerformed
+
+    private void tfTamanhoBuffersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tfTamanhoBuffersActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_tfTamanhoBuffersActionPerformed
 
     /**
      * @param args the command line arguments

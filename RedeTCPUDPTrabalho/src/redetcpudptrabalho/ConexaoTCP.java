@@ -75,7 +75,7 @@ public class ConexaoTCP {
         }
     */
     
-    public void ouvirPedidos(int porta,File file){
+    public void ouvirPedidos(int porta,File file,int tamanhoBuffer){
         ServerSocket serverSocket = null;
         try{
             serverSocket = new ServerSocket(porta);
@@ -88,7 +88,7 @@ public class ConexaoTCP {
                         System.out.println("thread interompida");
                         break;
                     }
-                    Thread t1 = new threadDeSocket(socket,file);
+                    Thread t1 = new threadDeSocket(socket,file,tamanhoBuffer);
                     t1.start();
                 }catch(SocketTimeoutException e){
                     if (Thread.interrupted()){
@@ -128,12 +128,16 @@ public class ConexaoTCP {
             //leitura de nome do arquivo
             byte[] nomeArquivo = new byte[tamanhoNomeArquivo];
             in.read(nomeArquivo);
+            byte[] tamanhoBufferB = new byte[4];
+            in.read(tamanhoBufferB);
+            int tamanhoBuffer = ByteBuffer.wrap(tamanhoBufferB).getInt();
+            //System.out.println("tamanhoBuffer = " + tamanhoBuffer);
             String nome = new String(nomeArquivo);
             File newFile = new File(destino,nome);
             out = new BufferedOutputStream(new FileOutputStream(newFile));
             //leitura de dados
             int bytesRead;
-            byte[] linhaLida = new byte[512];
+            byte[] linhaLida = new byte[tamanhoBuffer];
             int contador = 0;
             do{
                 bytesRead = in.read(linhaLida);
@@ -145,11 +149,11 @@ public class ConexaoTCP {
             }while(bytesRead > -1);
             Double elapsedTime = (System.nanoTime()+0.00-startTime+0.00)/1000000000;
             return(elapsedTime);
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             Logger.getLogger("tcp").log(Level.SEVERE, null, ex);
             return(null);
         } finally {
-            System.out.println("conexao finalizada!");
+            //System.out.println("conexao finalizada!");
             try {
                 if (!(socket==null)){
                     socket.close();
@@ -166,9 +170,11 @@ public class ConexaoTCP {
     class threadDeSocket extends Thread{
         Socket socketBuffer = null;
         File arquivo = null;
-        threadDeSocket(Socket socket,File arquivo){
+        int tamanhoBuffer = 1024;
+        threadDeSocket(Socket socket,File arquivo,int tam){
             socketBuffer = socket;
             this.arquivo = arquivo;
+            this.tamanhoBuffer = tam;
         }
         @Override
         public void run(){
@@ -179,15 +185,20 @@ public class ConexaoTCP {
                 //enviando tamanho do nome do arquivo
                 int tamNomeArquivo = arquivo.getName().length();
                 ByteBuffer wrapped = ByteBuffer.allocate(4);
+                ByteBuffer wrapped2 = ByteBuffer.allocate(4);
                 wrapped.putInt(tamNomeArquivo);
                 byte[] tamNome;
                 tamNome = wrapped.array();
                 out.write(tamNome);
                 //envio de nome do arquivo
                 out.write(arquivo.getName().getBytes());
+                //envio de tamanho buffer
+                wrapped2.putInt(tamanhoBuffer);
+                byte[] tamanhoBufferB = wrapped2.array();
+                out.write(tamanhoBufferB);
 
                 //envio de dados
-                byte[] linhaLida = new byte[512];
+                byte[] linhaLida = new byte[tamanhoBuffer];
                 int bytesLidos = 0;
                 while (true){
                     bytesLidos = bInput.read(linhaLida);

@@ -463,11 +463,13 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                         double[] datas = UDPDataEstatistica.gerarMedidas(udpArray);
                         double mediatempo = datas[0];
                         double mediaRetrans = datas[1];
-                        double desvioPTempo = datas[2];
                         double desvioPRetrans = datas[3];
-                        double nivelDeConfiancaTempo = 1.96*desvioPRetrans/(Math.sqrt(retransmissoesBuffer));
-                        double erroMaximo = 100.0*(nivelDeConfiancaTempo/mediaRetrans);
-                        System.out.println("media tempo : " + String.format("%.8f", mediatempo) + " seg\nMedia retransmissao : " + String.format("%.8f %%", mediaRetrans) + "\nDesvio retransmissao : " + String.format("%.8f", desvioPTempo) + "\nIntervalo de confiança retransmissao: " + String.format("%.8f",mediaRetrans) + "+/- " + String.format("%.8f",nivelDeConfiancaTempo) + ",Erro maximo : " + String.format("%.8f",erroMaximo) + "%");
+                        double nivelDeConfiancaRetrans = 1.96*desvioPRetrans/(Math.sqrt(retransmissoesBuffer));
+                        double erroMaximo = 0.00;
+                        if (mediaRetrans >= 0.00000001){
+                            erroMaximo = 100.0*(nivelDeConfiancaRetrans/mediaRetrans);
+                        }
+                        System.out.println("media tempo : " + String.format("%.8f", mediatempo) + " seg\nMedia retransmissao : " + String.format("%.8f %%", mediaRetrans) + "\nDesvio retransmissao : " + String.format("%.8f", desvioPRetrans) + "\nIntervalo de confiança retransmissao: " + String.format("%.8f",mediaRetrans) + "+/- " + String.format("%.8f",nivelDeConfiancaRetrans) + ",Erro maximo : " + String.format("%.8f",erroMaximo) + "%");
                         if (erroMaximo >= 10){
                             double numeroDeExperimentos = Math.pow(((1.96*desvioPRetrans)/(0.1*mediaRetrans)),2);
                             numeroDeExperimentos = Math.ceil(numeroDeExperimentos);
