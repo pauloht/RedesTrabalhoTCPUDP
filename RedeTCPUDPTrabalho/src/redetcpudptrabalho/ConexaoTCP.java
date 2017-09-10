@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -75,25 +76,47 @@ public class ConexaoTCP {
     */
     
     public void ouvirPedidos(int porta,File file){
+        ServerSocket serverSocket = null;
         try{
-            ServerSocket serverSocket = new ServerSocket(porta);
+            serverSocket = new ServerSocket(porta);
+            serverSocket.setSoTimeout(1000);
             System.out.println("aguardando conexao");
-            int conexaoContador = 0;
             while(true){
-                Socket socket = serverSocket.accept();
-                Thread t1 = new threadDeSocket(socket,file);
-                t1.start();
+                try{
+                    Socket socket = serverSocket.accept();
+                    if (Thread.interrupted()){
+                        System.out.println("thread interompida");
+                        break;
+                    }
+                    Thread t1 = new threadDeSocket(socket,file);
+                    t1.start();
+                }catch(SocketTimeoutException e){
+                    if (Thread.interrupted()){
+                        System.out.println("thread interompida");
+                        break;
+                    }else{
+                        System.out.println("esperando conexao");
+                    }
+                }
             }
         } catch(Exception e){
-            
+            e.printStackTrace();
         }finally{
-            
+            if (!(serverSocket==null)){
+                try {
+                    serverSocket.close();
+                } catch (IOException ex) {
+                    Logger.getLogger(ConexaoTCP.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
         }
     }
     
-    public void solicitarPedido(String servidor,int porta,File destino,boolean interupcaoFlag){
+    public Object solicitarPedido(String servidor,int porta,File destino,boolean interupcaoFlag){
         Socket socket = null;
         BufferedOutputStream out = null;
+        long startTime = System.nanoTime();
+        boolean erro = false;
         try {
             socket = new Socket(servidor, porta);
             DataInputStream in = new DataInputStream(
@@ -120,8 +143,11 @@ public class ConexaoTCP {
                     contador++;
                 }
             }while(bytesRead > -1);
+            Double elapsedTime = (System.nanoTime()+0.00-startTime+0.00)/1000000000;
+            return(elapsedTime);
         } catch (IOException ex) {
             Logger.getLogger("tcp").log(Level.SEVERE, null, ex);
+            return(null);
         } finally {
             System.out.println("conexao finalizada!");
             try {

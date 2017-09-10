@@ -7,14 +7,16 @@ package redetcpudptrabalho;
 
 import java.awt.Color;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Observable;
+import java.util.Observer;
 import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
  *
  * @author Usuario
  */
-public class clienteFrame extends javax.swing.JFrame {
+public class clienteFrame extends javax.swing.JFrame implements Observer{
     File fileBuffer = null;
     JFileChooser fcBuffer = null;
     int portaValor = 5963;
@@ -23,6 +25,9 @@ public class clienteFrame extends javax.swing.JFrame {
     boolean threadControlLock = false;
     volatile boolean threadInterruptFlag = false;
     boolean usarTCP = true;
+    int retransmissoes = 0;
+    int retransmissoesBuffer = 0;
+    ArrayList<UDPDataEstatistica> udpArray = new ArrayList<>();
     /**
      * Creates new form NovoJFrame
      */
@@ -51,6 +56,8 @@ public class clienteFrame extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         tfIP = new javax.swing.JTextField();
+        jLabel5 = new javax.swing.JLabel();
+        tfRepeticoes = new javax.swing.JTextField();
         lbInfo = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -139,6 +146,10 @@ public class clienteFrame extends javax.swing.JFrame {
             }
         });
 
+        jLabel5.setText("Repetições : ");
+
+        tfRepeticoes.setText("1");
+
         javax.swing.GroupLayout pConfigLayout = new javax.swing.GroupLayout(pConfig);
         pConfig.setLayout(pConfigLayout);
         pConfigLayout.setHorizontalGroup(
@@ -150,14 +161,18 @@ public class clienteFrame extends javax.swing.JFrame {
                 .addGap(2, 2, 2)
                 .addGroup(pConfigLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pConfigLayout.createSequentialGroup()
-                        .addComponent(jLabel4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(tfIP, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(jLabel5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(tfRepeticoes))
                     .addGroup(pConfigLayout.createSequentialGroup()
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(tfPorta, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(tfPorta))
+                    .addGroup(pConfigLayout.createSequentialGroup()
+                        .addComponent(jLabel4)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(tfIP)))
+                .addContainerGap())
         );
         pConfigLayout.setVerticalGroup(
             pConfigLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -171,7 +186,11 @@ public class clienteFrame extends javax.swing.JFrame {
                 .addGroup(pConfigLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
                     .addComponent(tfIP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(24, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pConfigLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel5)
+                    .addComponent(tfRepeticoes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(35, Short.MAX_VALUE))
         );
 
         lbInfo.setText("Nao conectado");
@@ -201,7 +220,7 @@ public class clienteFrame extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(pConfig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 108, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 71, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(tbBaixar)
                     .addComponent(lbInfo, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -298,79 +317,53 @@ public class clienteFrame extends javax.swing.JFrame {
 
     private void iniciarConexaoServidor(){
         lbInfo.setText("Downloading...");
-        if (usarTCP){
-            ConexaoTCP conex = new ConexaoTCP();
-            Thread t1 = new Thread(){
-                boolean ocorreuErro = false;
-                public void run(){
-                    try{
-                        conex.solicitarPedido(tfIP.getText(), portaValor, fileBuffer, threadInterruptFlag);
-                    }catch(Exception e){
-                        lbInfo.setText("Erro!");
-                        e.printStackTrace();
-                        ocorreuErro = true;
-                    }finally{
-                        threadControlLock = false;
-                        if (!ocorreuErro){
-                            lbInfo.setText("Download concluido!");
-                        }
-                    }
-                }
-            };
-            threadControlLock = true;
-            t1.start();
-        }else{
-            ConexaoUDP conex = new ConexaoUDP();
-            Thread t1 = new Thread(){
-                boolean ocorreuErro = false;
-                public void run(){
-                    try{
-                        int resposta = conex.solicitarPedido(tfIP.getText(), fileBuffer, threadInterruptFlag);
-                        if (resposta==0){//nao ocorreu erro
-                            
-                        }else if(resposta==-1){//timeout
-                            lbInfo.setText("Timeout!");
-                            ocorreuErro = true;
-                        }else{
-                            lbInfo.setText("Erro!");//outroerro
-                            ocorreuErro = true;
-                        }
-                    }catch(Exception e){
-                        e.printStackTrace();
-                    }finally{
-                        threadControlLock = false;
-                        if (!ocorreuErro){
-                            lbInfo.setText("Download concluido!");
-                        }
-                    }
-                }
-            };
-            threadControlLock = true;
-            t1.start();
-        }
+        conexThread thread = new conexThread(usarTCP);
+        thread.addObserver(this);
+        java.awt.EventQueue.invokeLater(thread);
     }
     
     private void mudarEstadoDeInterface(){
         boolean decisor = tbBaixar.isSelected();
+        globalLock = decisor;
+        tbBaixar.setEnabled(!decisor);
+        btSelecionarArquivo.setEnabled(!decisor);
+        tfIP.setEditable(!decisor);
+        tfPorta.setEditable(!decisor);
         if (decisor){
-            tbBaixar.setText("Parar download");
+            tbBaixar.setText("Downloading");
             iniciarConexaoServidor();
         }else{
             tbBaixar.setText("Baixar Arquivo");
         }
-        globalLock = decisor;
-        btSelecionarArquivo.setEnabled(!decisor);
-        tfIP.setEditable(!decisor);
-        tfPorta.setEditable(!decisor);
     }
     
     private void tbBaixarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbBaixarActionPerformed
         // TODO add your handling code here:
-        if (!(fileBuffer==null)){
-            mudarEstadoDeInterface();
-        }else{
-            lbInfo.setText("Erro!, pasta nao selecionada!");
-            tbBaixar.setSelected(false);
+        boolean erro = false;
+        try{
+            if (!(fileBuffer==null)){
+                int repeticoes = Integer.parseInt(tfRepeticoes.getText());
+                if (repeticoes>0){
+                    this.retransmissoes = repeticoes;
+                    this.retransmissoesBuffer = repeticoes;
+                    mudarEstadoDeInterface();
+                }else{
+                    lbInfo.setText("campo de texto repeticoes deve ser maior que zero");
+                    tfRepeticoes.setText("1");
+                    erro = true;
+                }
+            }else{
+                lbInfo.setText("Erro!, pasta nao selecionada!");
+                
+            }
+        }catch(NumberFormatException e){
+            lbInfo.setText("Erro, campo de texto repeticoes invalido!");
+            tfRepeticoes.setText("1");
+            erro = true;
+        }finally{
+            if (erro){
+                tbBaixar.setSelected(false);
+            }
         }
     }//GEN-LAST:event_tbBaixarActionPerformed
 
@@ -440,6 +433,7 @@ public class clienteFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JLabel lbArquivoNome;
@@ -449,5 +443,157 @@ public class clienteFrame extends javax.swing.JFrame {
     private javax.swing.JToggleButton tbTransporte;
     private javax.swing.JTextField tfIP;
     private javax.swing.JTextField tfPorta;
+    private javax.swing.JTextField tfRepeticoes;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void update(Observable o, Object arg) {
+        if (arg instanceof ArrayList){
+            ArrayList array = (ArrayList)arg;
+            String primeiraMsg = (String)array.get(0);
+            if (primeiraMsg.equals("fimudp")){
+                boolean sucessoDownload = (boolean)array.get(1);
+                if (sucessoDownload){
+                    double tempo = (double)array.get(2);
+                    double retrans = (double)array.get(3);
+                    UDPDataEstatistica newData = new UDPDataEstatistica(tempo, retrans);
+                    udpArray.add(newData);
+                    retransmissoes = retransmissoes-1;
+                    if (retransmissoes<=0){
+                        double[] datas = UDPDataEstatistica.gerarMedidas(udpArray);
+                        double mediatempo = datas[0];
+                        double mediaRetrans = datas[1];
+                        double desvioPTempo = datas[2];
+                        double desvioPRetrans = datas[3];
+                        double nivelDeConfiancaTempo = 1.96*desvioPRetrans/(Math.sqrt(retransmissoesBuffer));
+                        double erroMaximo = 100.0*(nivelDeConfiancaTempo/mediaRetrans);
+                        System.out.println("media tempo : " + String.format("%.8f", mediatempo) + " seg\nMedia retransmissao : " + String.format("%.8f %%", mediaRetrans) + "\nDesvio retransmissao : " + String.format("%.8f", desvioPTempo) + "\nIntervalo de confiança retransmissao: " + String.format("%.8f",mediaRetrans) + "+/- " + String.format("%.8f",nivelDeConfiancaTempo) + ",Erro maximo : " + String.format("%.8f",erroMaximo) + "%");
+                        if (erroMaximo >= 10){
+                            double numeroDeExperimentos = Math.pow(((1.96*desvioPRetrans)/(0.1*mediaRetrans)),2);
+                            numeroDeExperimentos = Math.ceil(numeroDeExperimentos);
+                            System.out.println("Numero de repeticoes necessarias : " + String.format("%.0f repeticoes",numeroDeExperimentos));
+                        }
+                        tbBaixar.setSelected(false);
+                        mudarEstadoDeInterface();
+                        retransmissoes = 0;
+                        udpArray = new ArrayList<>();
+                    }else{
+                        iniciarConexaoServidor();
+                    }
+                }else{
+                    tbBaixar.setSelected(false);
+                    mudarEstadoDeInterface();
+                    retransmissoes = 0;
+                    udpArray = new ArrayList<>();
+                }
+            }else if(primeiraMsg.equals("fimtcp")){
+                boolean sucessoDownload = (boolean)array.get(1);
+                if (sucessoDownload){
+                    double tempo = (double)array.get(2);
+                    UDPDataEstatistica newData = new UDPDataEstatistica(tempo, 0.0);
+                    udpArray.add(newData);
+                    retransmissoes = retransmissoes-1;
+                    if (retransmissoes<=0){
+                        double[] datas = UDPDataEstatistica.gerarMedidas(udpArray);
+                        double mediatempo = datas[0];
+                        System.out.println("media tempo : " + String.format("%.8f", mediatempo));
+                        tbBaixar.setSelected(false);
+                        mudarEstadoDeInterface();
+                        retransmissoes = 0;
+                        udpArray = new ArrayList<>();
+                    }else{
+                        System.out.println("Tempo : " + String.format("%.8f", tempo));
+                        iniciarConexaoServidor();
+                    }
+                }else{
+                    tbBaixar.setSelected(false);
+                    mudarEstadoDeInterface();
+                    retransmissoes = 0;
+                    udpArray = new ArrayList<>();
+                }
+            }else{
+                lbInfo.setText("Erro notificação de observable!");
+            }
+        }else{
+            throw new IllegalArgumentException("Esperava-se tipo String!");
+        }
+    }
+    
+    class conexThread extends Observable implements Runnable{
+        boolean conexaoTCP = true;
+        
+        public conexThread(boolean ehTCP){
+            conexaoTCP = ehTCP;
+        }
+        
+        @Override
+        public void run(){
+            ArrayList<Object> arg = new ArrayList<>();
+            try{
+                if (conexaoTCP){
+                    arg.add("fimtcp");
+                    ConexaoTCP conex = new ConexaoTCP();
+                    boolean ocorreuErro = false;
+                    try{
+                        Object ret = conex.solicitarPedido(tfIP.getText(), portaValor, fileBuffer, threadInterruptFlag);
+                        if (ret instanceof Double){
+                            Double retorno = (Double)ret;
+                            if (!(retorno==null)){
+                                arg.add(true);
+                                arg.add(retorno);
+                            }else{
+                                arg.add(false);
+                            }
+                        }
+                    }catch(Exception e){
+                        lbInfo.setText("Erro!");
+                        e.printStackTrace();
+                        ocorreuErro = true;
+                    }finally{
+                        threadControlLock = false;
+                        if (!ocorreuErro){
+                            lbInfo.setText("Download concluido!");
+                        }
+                    }
+                    threadControlLock = true;
+                }else{
+                    arg.add("fimudp");
+                    ConexaoUDP conex = new ConexaoUDP();
+                    boolean ocorreuErro = false;
+                    try{
+                        Object ret = conex.solicitarPedido(tfIP.getText(), fileBuffer, threadInterruptFlag);
+                        if (ret instanceof Integer){
+                            arg.add(false);
+                            Integer resposta = (Integer)ret;
+                            if(resposta==-1){//timeout
+                                lbInfo.setText("Timeout!");
+                                ocorreuErro = true;
+                            }else{
+                                lbInfo.setText("Erro!");//outroerro
+                                ocorreuErro = true;
+                            }
+                        }else{//retorno arraylist
+                            arg.add(true);
+                            ArrayList resposta = (ArrayList)ret;
+                            arg.add(resposta.get(0));
+                            arg.add(resposta.get(1));
+                        }
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }finally{
+                        threadControlLock = false;
+                        if (!ocorreuErro){
+                            lbInfo.setText("Download concluido!");
+                        }   
+                    }   
+                    threadControlLock = true;
+                }
+            }catch(Exception e){
+                lbInfo.setText("Erro!(2)");
+            }finally{
+                setChanged();
+                notifyObservers(arg);
+            }
+        }
+    }
 }
