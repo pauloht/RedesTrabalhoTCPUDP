@@ -463,15 +463,16 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                         double[] datas = UDPDataEstatistica.gerarMedidas(udpArray);
                         double mediatempo = datas[0];
                         double mediaRetrans = datas[1];
-                        double desvioPRetrans = datas[3];
-                        double nivelDeConfiancaRetrans = 1.96*desvioPRetrans/(Math.sqrt(retransmissoesBuffer));
+                        double desvioTempo = datas[2];
+                        //double desvioPRetrans = datas[3];
+                        double nivelDeConfTempo = 1.96*desvioTempo/(Math.sqrt(retransmissoesBuffer));
                         double erroMaximo = 0.00;
-                        if (mediaRetrans >= 0.00000001){
-                            erroMaximo = 100.0*(nivelDeConfiancaRetrans/mediaRetrans);
+                        if (desvioTempo >= 0.00000001){
+                            erroMaximo = 100.0*(nivelDeConfTempo/desvioTempo);
                         }
-                        System.out.println("media tempo : " + String.format("%.8f", mediatempo) + " seg\nMedia retransmissao : " + String.format("%.8f %%", mediaRetrans) + "\nDesvio retransmissao : " + String.format("%.8f", desvioPRetrans) + "\nIntervalo de confiança retransmissao: " + String.format("%.8f",mediaRetrans) + "+/- " + String.format("%.8f",nivelDeConfiancaRetrans) + ",Erro maximo : " + String.format("%.8f",erroMaximo) + "%");
+                        System.out.println("Numero de repetições : " + retransmissoesBuffer + ",Media tempo : " + String.format("%.8f", mediatempo) + " seg\nMedia retransmissao : " + String.format("%.8f %%", mediaRetrans) + "\nDesvio tempo : " + String.format("%.8f", desvioTempo) + "\nIntervalo de confiança retransmissao: " + String.format("%.8f",mediatempo) + "+/- " + String.format("%.8f",nivelDeConfTempo) + ",Erro maximo : " + String.format("%.8f",erroMaximo) + "%");
                         if (erroMaximo >= 10){
-                            double numeroDeExperimentos = Math.pow(((1.96*desvioPRetrans)/(0.1*mediaRetrans)),2);
+                            double numeroDeExperimentos = Math.pow(((1.96*desvioTempo)/(0.1*mediatempo)),2);
                             numeroDeExperimentos = Math.ceil(numeroDeExperimentos);
                             System.out.println("Numero de repeticoes necessarias : " + String.format("%.0f repeticoes",numeroDeExperimentos));
                         }
@@ -498,11 +499,20 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                     if (retransmissoes<=0){
                         double[] datas = UDPDataEstatistica.gerarMedidas(udpArray);
                         double mediatempo = datas[0];
-                        System.out.println("media tempo : " + String.format("%.8f", mediatempo));
-                        tbBaixar.setSelected(false);
-                        mudarEstadoDeInterface();
-                        retransmissoes = 0;
-                        udpArray = new ArrayList<>();
+                        //double mediaRetrans = datas[1];
+                        double desvioTempo = datas[2];
+                        //double desvioPRetrans = datas[3];
+                        double nivelDeConfTempo = 1.96*desvioTempo/(Math.sqrt(retransmissoesBuffer));
+                        double erroMaximo = 0.00;
+                        if (desvioTempo >= 0.00000001){
+                            erroMaximo = 100.0*(nivelDeConfTempo/desvioTempo);
+                        }
+                        System.out.println("Numero de repetições : " + retransmissoesBuffer + ",Media tempo : " + String.format("%.8f", mediatempo) + " seg" + "\nDesvio tempo : " + String.format("%.8f", desvioTempo) + "\nIntervalo de confiança retransmissao: " + String.format("%.8f",mediatempo) + "+/- " + String.format("%.8f",nivelDeConfTempo) + ",Erro maximo : " + String.format("%.8f",erroMaximo) + "%");
+                        if (erroMaximo >= 10){
+                            double numeroDeExperimentos = Math.pow(((1.96*desvioTempo)/(0.1*mediatempo)),2);
+                            numeroDeExperimentos = Math.ceil(numeroDeExperimentos);
+                            System.out.println("Numero de repeticoes necessarias : " + String.format("%.0f repeticoes",numeroDeExperimentos));
+                        }
                     }else{
                         System.out.println("Tempo : " + String.format("%.8f", tempo));
                         iniciarConexaoServidor();
