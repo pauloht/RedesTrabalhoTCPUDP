@@ -150,6 +150,7 @@ public class ConexaoTCP {
             Double elapsedTime = (System.nanoTime()+0.00-startTime+0.00)/1000000000;
             return(elapsedTime);
         } catch (Exception ex) {
+            System.out.println("caiu em exception");
             Logger.getLogger("tcp").log(Level.SEVERE, null, ex);
             return(null);
         } finally {

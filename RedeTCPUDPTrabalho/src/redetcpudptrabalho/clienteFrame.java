@@ -493,6 +493,7 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                 boolean sucessoDownload = (boolean)array.get(1);
                 if (sucessoDownload){
                     double tempo = (double)array.get(2);
+                    System.out.println("Tempo : " + String.format("%.8f", tempo));
                     UDPDataEstatistica newData = new UDPDataEstatistica(tempo, 0.0);
                     udpArray.add(newData);
                     retransmissoes = retransmissoes-1;
@@ -505,16 +506,19 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                         double nivelDeConfTempo = 1.96*desvioTempo/(Math.sqrt(retransmissoesBuffer));
                         double erroMaximo = 0.00;
                         if (desvioTempo >= 0.00000001){
-                            erroMaximo = 100.0*(nivelDeConfTempo/desvioTempo);
+                            erroMaximo = 100.0*(nivelDeConfTempo/mediatempo);
                         }
-                        System.out.println("Numero de repetições : " + retransmissoesBuffer + ",Media tempo : " + String.format("%.8f", mediatempo) + " seg" + "\nDesvio tempo : " + String.format("%.8f", desvioTempo) + "\nIntervalo de confiança retransmissao: " + String.format("%.8f",mediatempo) + "+/- " + String.format("%.8f",nivelDeConfTempo) + ",Erro maximo : " + String.format("%.8f",erroMaximo) + "%");
+                        System.out.println("Numero de repetições : " + retransmissoesBuffer + "\nMedia tempo : " + String.format("%.8f", mediatempo) + " seg" + "\nDesvio tempo : " + String.format("%.8f", desvioTempo) + "\nIntervalo de confiança retransmissao: " + String.format("%.8f",mediatempo) + "+/- " + String.format("%.8f",nivelDeConfTempo) + ",Erro maximo : " + String.format("%.8f",erroMaximo) + "%");
                         if (erroMaximo >= 10){
                             double numeroDeExperimentos = Math.pow(((1.96*desvioTempo)/(0.1*mediatempo)),2);
                             numeroDeExperimentos = Math.ceil(numeroDeExperimentos);
                             System.out.println("Numero de repeticoes necessarias : " + String.format("%.0f repeticoes",numeroDeExperimentos));
                         }
+                        tbBaixar.setSelected(false);
+                        mudarEstadoDeInterface();
+                        retransmissoes = 0;
+                        udpArray = new ArrayList<>();
                     }else{
-                        System.out.println("Tempo : " + String.format("%.8f", tempo));
                         iniciarConexaoServidor();
                     }
                 }else{
@@ -554,8 +558,12 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                                 arg.add(true);
                                 arg.add(retorno);
                             }else{
+                                lbInfo.setText("Erro!");
+                                ocorreuErro = true;
                                 arg.add(false);
                             }
+                        }else{
+                            arg.add(false);
                         }
                     }catch(Exception e){
                         lbInfo.setText("Erro!");
@@ -586,6 +594,7 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                             }
                         }else{//retorno arraylist
                             arg.add(true);
+                            System.out.println("erro?");
                             ArrayList resposta = (ArrayList)ret;
                             arg.add(resposta.get(0));
                             arg.add(resposta.get(1));
