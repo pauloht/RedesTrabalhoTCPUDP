@@ -28,6 +28,7 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
     int retransmissoes = 0;
     int retransmissoesBuffer = 0;
     ArrayList<UDPDataEstatistica> udpArray = new ArrayList<>();
+    int contadorDeFalhasSucessivas = 5;
     /**
      * Creates new form NovoJFrame
      */
@@ -454,6 +455,7 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
             if (primeiraMsg.equals("fimudp")){
                 boolean sucessoDownload = (boolean)array.get(1);
                 if (sucessoDownload){
+                    contadorDeFalhasSucessivas = 5;
                     double tempo = (double)array.get(2);
                     double retrans = (double)array.get(3);
                     UDPDataEstatistica newData = new UDPDataEstatistica(tempo, retrans);
@@ -481,19 +483,25 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                         retransmissoes = 0;
                         udpArray = new ArrayList<>();
                     }else{
-                        iniciarConexaoServidor();
+                        System.out.println("falta : " + retransmissoes);
                     }
                 }else{
-                    tbBaixar.setSelected(false);
-                    mudarEstadoDeInterface();
-                    retransmissoes = 0;
-                    udpArray = new ArrayList<>();
+                    if (contadorDeFalhasSucessivas<0){
+                        tbBaixar.setSelected(false);
+                        mudarEstadoDeInterface();
+                        retransmissoes = 0;
+                        udpArray = new ArrayList<>();
+                    }else{
+                        System.out.println("FALHOU");
+                        contadorDeFalhasSucessivas = contadorDeFalhasSucessivas-1;
+                    }
                 }
             }else if(primeiraMsg.equals("fimtcp")){
                 boolean sucessoDownload = (boolean)array.get(1);
                 if (sucessoDownload){
                     double tempo = (double)array.get(2);
                     System.out.println("Tempo : " + String.format("%.8f", tempo));
+                    System.out.println("falta : " + retransmissoes);
                     UDPDataEstatistica newData = new UDPDataEstatistica(tempo, 0.0);
                     udpArray.add(newData);
                     retransmissoes = retransmissoes-1;
@@ -595,6 +603,7 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                         }else{//retorno arraylist
                             arg.add(true);
                             ArrayList resposta = (ArrayList)ret;
+                            //System.out.println("recebido : " + resposta);
                             arg.add(resposta.get(0));
                             arg.add(resposta.get(1));
                         }

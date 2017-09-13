@@ -263,180 +263,188 @@ public class ConexaoUDP {
         DatagramSocket clientSocket = null;
         DatagramSocket serverSocket = null;
         long endTime;
-        long startTime = System.nanoTime();
         try{
             clientSocket = new DatagramSocket();
             serverSocket = new DatagramSocket(9876);
-            byte[] receiveData = new byte[1024];
-            String comprimento = "SendData";
-            byte[] pacoteCumprimento = comprimento.getBytes();
-            InetAddress ipServidor = InetAddress.getByName(servidor);
-            DatagramPacket primeiroPacket = new DatagramPacket(pacoteCumprimento, pacoteCumprimento.length, ipServidor, 6789);
-            DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-            clientSocket.send(primeiroPacket); 
-            //enviou primeira msg, esperar resposta(até 1 segundos)
-            serverSocket.setSoTimeout(1000);
-            serverSocket.receive(receivePacket);
-            String msgRecebida = new String(receivePacket.getData());//recebe okay junto com tamaho do nome arquivo,nome do arquivo,quantia de buffers e tamanho de buffers
-            byte[] codigo = new byte[4];//recebe okay
-            System.arraycopy(receiveData, 0, codigo, 0, codigo.length);
-            int movimento = codigo.length;
-            String sCodigo = new String(codigo);
-            ArrayList<Object> retorno = new ArrayList<>();
-            if (sCodigo.equals("Okay")){
-                //leitura do tamanho do nome do arquivo
-                byte[] tamNome = new byte[4];
-                System.arraycopy(receiveData, movimento, tamNome, 0, tamNome.length);
-                movimento = movimento+tamNome.length;
-                int tamanhoNomeArquivo = ByteBuffer.wrap(tamNome).getInt();
-                byte[] nomeArquivo = new byte[tamanhoNomeArquivo];
-                System.arraycopy(receiveData, movimento, nomeArquivo, 0, nomeArquivo.length);
-                movimento = movimento+nomeArquivo.length;
-                byte[] quantiaBuffersB = new byte[4];
-                System.arraycopy(receiveData, movimento, quantiaBuffersB, 0, quantiaBuffersB.length);
-                movimento = movimento+quantiaBuffersB.length;
-                byte[] tamanhoBuffersB = new byte[4];
-                System.arraycopy(receiveData,movimento,tamanhoBuffersB,0,tamanhoBuffersB.length);
-                int quantiaBuffers = ByteBuffer.wrap(quantiaBuffersB).getInt();
-                int tamanhoBuffers = ByteBuffer.wrap(tamanhoBuffersB).getInt();
-                String nome = new String(nomeArquivo);
-                File newFile = new File(destino,nome);
-                out = new BufferedOutputStream(new FileOutputStream(newFile));
-                boolean[] indicacaoDeRecebimento = new boolean[quantiaBuffers];
-                byte[][] bufferDeRecebimento = new byte[quantiaBuffers][tamanhoBuffers];
-                int[] tamanhoReal = new int[quantiaBuffers];
-                
-                for (int i=0;i<indicacaoDeRecebimento.length;i++){
-                    indicacaoDeRecebimento[i] = false;
+            int retransmissaoCumprimento = 10;
+            while (retransmissaoCumprimento > 0){
+                retransmissaoCumprimento = retransmissaoCumprimento-1;
+                byte[] receiveData = new byte[1024];
+                String comprimento = "SendData";
+                byte[] pacoteCumprimento = comprimento.getBytes();
+                InetAddress ipServidor = InetAddress.getByName(servidor);
+                DatagramPacket primeiroPacket = new DatagramPacket(pacoteCumprimento, pacoteCumprimento.length, ipServidor, 6789);
+                DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+                clientSocket.send(primeiroPacket); 
+                //enviou primeira msg, esperar resposta(até 1 segundos)
+                serverSocket.setSoTimeout(1000);
+                String msgRecebida = "null";
+                try{
+                    serverSocket.receive(receivePacket);
+                    msgRecebida = new String(receivePacket.getData());//recebe okay junto com tamaho do nome arquivo,nome do arquivo,quantia de buffers e tamanho de buffers
+                }catch (SocketTimeoutException e){
+                    System.out.println("espera timeout!");
                 }
-                int maximo = quantiaBuffers;
-                int numeroRecebido = 0;
-                boolean estadoFinal = false;
-                byte[] ackByte = new byte[8+quantiaBuffers*4];
-                DatagramPacket pacoteDeAck = new DatagramPacket(ackByte, ackByte.length, ipServidor, 5678);
-                byte[] ack = "ACK".getBytes();
-                byte[] nck = "NCK".getBytes();
-                byte[] fin = "FIN".getBytes();
-                ByteBuffer wrapper = ByteBuffer.allocate(4);
-                int contadorDeRetransmissoes = 0;
-                int maxNumeroDeRetransmissaoDeAcks = 10;
-                boolean nackMontado = false;
-                serverSocket.setSoTimeout(100);
-                int tamanhoRecebido = 0;
-                int fimDeArquivoUltimoBuffer = 0;
-                int tamanhoAcumulado = 0;
-                int pacotesValidos = 0;
-                int pacotesRetransmitidos = 0;
-                while (true){ // recebe pacotes até receber pacote com numero -1
-                    try{
-                        serverSocket.receive(receivePacket);
-                        tamanhoRecebido = receivePacket.getLength()-4;
-                        contadorDeRetransmissoes = 0;
-                        nackMontado = false;
-                        byte[] idPacoteB = new byte[4];
-                        System.arraycopy(receiveData, 0, idPacoteB, 0, 4);
-                        int idPacote = java.nio.ByteBuffer.wrap(idPacoteB).getInt();
-                        if (idPacote == -1){
-                            System.arraycopy(receiveData,4, idPacoteB, 0, 4);
-                            int numeroDePacotesRestantes = ByteBuffer.wrap(idPacoteB).getInt();
-                            if (numeroDePacotesRestantes==-1){
-                                //System.out.println("fin");
-                                out.flush();
-                                System.arraycopy(fin, 0, ackByte, 0, ack.length);
-                                clientSocket.send(pacoteDeAck);
-                                break;
-                            }else{ //retransmissao invalida
-                                fimDeArquivoUltimoBuffer = numeroDePacotesRestantes;
-                                //System.out.println("Ja recebeu todos os pacotes necessarios");
-                                if (numeroRecebido>=fimDeArquivoUltimoBuffer){
-                                        //ja recebeu os ultimos pacotes, so prescissa escreve-los
-                                        for (int i=0;i<indicacaoDeRecebimento.length;i++){
-                                            indicacaoDeRecebimento[i] = false;
-                                        }
-                                        //System.out.println("escrevendo ultimos "+(fimDeArquivoUltimoBuffer+1)+" pacotes.");
-                                        //System.out.println("ultimos pacotes : " + (quantiaBuffers-(fimDeArquivoUltimoBuffer+1)));
-                                        pacotesRetransmitidos = pacotesRetransmitidos-(quantiaBuffers-(fimDeArquivoUltimoBuffer+1));
-                                        for (int i=0;i<=fimDeArquivoUltimoBuffer;i++){
-                                            out.write(bufferDeRecebimento[i],4,tamanhoReal[i]);
-                                            tamanhoAcumulado = tamanhoAcumulado+tamanhoReal[i];
-                                        }
-                                        System.arraycopy(fin, 0, ackByte, 0, ack.length);
-                                        clientSocket.send(pacoteDeAck);
-                                        out.flush();
-                                        break;
+                byte[] codigo = new byte[4];//recebe okay
+                System.arraycopy(receiveData, 0, codigo, 0, codigo.length);
+                int movimento = codigo.length;
+                String sCodigo = new String(codigo);
+                ArrayList<Object> retorno = new ArrayList<>();
+                if (sCodigo.equals("Okay")){
+                    long startTime = System.nanoTime();
+                    //leitura do tamanho do nome do arquivo
+                    byte[] tamNome = new byte[4];
+                    System.arraycopy(receiveData, movimento, tamNome, 0, tamNome.length);
+                    movimento = movimento+tamNome.length;
+                    int tamanhoNomeArquivo = ByteBuffer.wrap(tamNome).getInt();
+                    byte[] nomeArquivo = new byte[tamanhoNomeArquivo];
+                    System.arraycopy(receiveData, movimento, nomeArquivo, 0, nomeArquivo.length);
+                    movimento = movimento+nomeArquivo.length;
+                    byte[] quantiaBuffersB = new byte[4];
+                    System.arraycopy(receiveData, movimento, quantiaBuffersB, 0, quantiaBuffersB.length);
+                    movimento = movimento+quantiaBuffersB.length;
+                    byte[] tamanhoBuffersB = new byte[4];
+                    System.arraycopy(receiveData,movimento,tamanhoBuffersB,0,tamanhoBuffersB.length);
+                    int quantiaBuffers = ByteBuffer.wrap(quantiaBuffersB).getInt();
+                    int tamanhoBuffers = ByteBuffer.wrap(tamanhoBuffersB).getInt();
+                    String nome = new String(nomeArquivo);
+                    File newFile = new File(destino,nome);
+                    out = new BufferedOutputStream(new FileOutputStream(newFile));
+                    boolean[] indicacaoDeRecebimento = new boolean[quantiaBuffers];
+                    byte[][] bufferDeRecebimento = new byte[quantiaBuffers][tamanhoBuffers];
+                    int[] tamanhoReal = new int[quantiaBuffers];
+
+                    for (int i=0;i<indicacaoDeRecebimento.length;i++){
+                        indicacaoDeRecebimento[i] = false;
+                    }
+                    int maximo = quantiaBuffers;
+                    int numeroRecebido = 0;
+                    boolean estadoFinal = false;
+                    byte[] ackByte = new byte[8+quantiaBuffers*4];
+                    DatagramPacket pacoteDeAck = new DatagramPacket(ackByte, ackByte.length, ipServidor, 5678);
+                    byte[] ack = "ACK".getBytes();
+                    byte[] nck = "NCK".getBytes();
+                    byte[] fin = "FIN".getBytes();
+                    ByteBuffer wrapper = ByteBuffer.allocate(4);
+                    int contadorDeRetransmissoes = 0;
+                    int maxNumeroDeRetransmissaoDeAcks = 10;
+                    boolean nackMontado = false;
+                    serverSocket.setSoTimeout(100);
+                    int tamanhoRecebido = 0;
+                    int fimDeArquivoUltimoBuffer = 0;
+                    int tamanhoAcumulado = 0;
+                    int pacotesValidos = 0;
+                    int pacotesRetransmitidos = 0;
+                    while (true){ // recebe pacotes até receber pacote com numero -1
+                        try{
+                            serverSocket.receive(receivePacket);
+                            tamanhoRecebido = receivePacket.getLength()-4;
+                            contadorDeRetransmissoes = 0;
+                            nackMontado = false;
+                            byte[] idPacoteB = new byte[4];
+                            System.arraycopy(receiveData, 0, idPacoteB, 0, 4);
+                            int idPacote = java.nio.ByteBuffer.wrap(idPacoteB).getInt();
+                            if (idPacote == -1){
+                                System.arraycopy(receiveData,4, idPacoteB, 0, 4);
+                                int numeroDePacotesRestantes = ByteBuffer.wrap(idPacoteB).getInt();
+                                if (numeroDePacotesRestantes==-1){
+                                    //System.out.println("fin");
+                                    out.flush();
+                                    System.arraycopy(fin, 0, ackByte, 0, ack.length);
+                                    clientSocket.send(pacoteDeAck);
+                                    break;
+                                }else{ //retransmissao invalida
+                                    fimDeArquivoUltimoBuffer = numeroDePacotesRestantes;
+                                    //System.out.println("Ja recebeu todos os pacotes necessarios");
+                                    if (numeroRecebido>=fimDeArquivoUltimoBuffer){
+                                            //ja recebeu os ultimos pacotes, so prescissa escreve-los
+                                            for (int i=0;i<indicacaoDeRecebimento.length;i++){
+                                                indicacaoDeRecebimento[i] = false;
+                                            }
+                                            //System.out.println("escrevendo ultimos "+(fimDeArquivoUltimoBuffer+1)+" pacotes.");
+                                            //System.out.println("ultimos pacotes : " + (quantiaBuffers-(fimDeArquivoUltimoBuffer+1)));
+                                            pacotesRetransmitidos = pacotesRetransmitidos-(quantiaBuffers-(fimDeArquivoUltimoBuffer+1));
+                                            for (int i=0;i<=fimDeArquivoUltimoBuffer;i++){
+                                                out.write(bufferDeRecebimento[i],4,tamanhoReal[i]);
+                                                tamanhoAcumulado = tamanhoAcumulado+tamanhoReal[i];
+                                            }
+                                            System.arraycopy(fin, 0, ackByte, 0, ack.length);
+                                            clientSocket.send(pacoteDeAck);
+                                            out.flush();
+                                            break;
+                                    }else{
+                                        //System.out.println("fim="+fimDeArquivoUltimoBuffer+",buffer="+numeroRecebido);
+                                    }
+                                }
+                            }else{
+                                int valorMovido = idPacote-maximo+quantiaBuffers;
+                                if (valorMovido>=quantiaBuffers || valorMovido<0){
+                                    //System.out.println("id invalido "+idPacote);
                                 }else{
-                                    //System.out.println("fim="+fimDeArquivoUltimoBuffer+",buffer="+numeroRecebido);
-                                }
-                            }
-                        }else{
-                            int valorMovido = idPacote-maximo+quantiaBuffers;
-                            if (valorMovido>=quantiaBuffers || valorMovido<0){
-                                //System.out.println("id invalido "+idPacote);
-                            }else{
-                                if (!(indicacaoDeRecebimento[valorMovido])){ //pacote ainda nao foi recebido
-                                    pacotesValidos = pacotesValidos + 1;
-                                    //System.out.println("recebeu " + valorMovido + ",id="+idPacote+",tam="+tamanhoRecebido);
-                                    System.arraycopy(receiveData, 0, bufferDeRecebimento[valorMovido], 0, tamanhoRecebido+4);
-                                    tamanhoReal[valorMovido] = tamanhoRecebido;
-                                    indicacaoDeRecebimento[valorMovido] = true;//sinaliza recebimento
-                                    numeroRecebido = numeroRecebido+1;
-                                    if (numeroRecebido>=quantiaBuffers){
-                                        //ja recebeu quantiaBuffers pacotes, escreve os quantiaBuffers pacotes e prescissa receber proximos 10
-                                        for (int i=0;i<indicacaoDeRecebimento.length;i++){
-                                            indicacaoDeRecebimento[i] = false;
+                                    if (!(indicacaoDeRecebimento[valorMovido])){ //pacote ainda nao foi recebido
+                                        pacotesValidos = pacotesValidos + 1;
+                                        //System.out.println("recebeu " + valorMovido + ",id="+idPacote+",tam="+tamanhoRecebido);
+                                        System.arraycopy(receiveData, 0, bufferDeRecebimento[valorMovido], 0, tamanhoRecebido+4);
+                                        tamanhoReal[valorMovido] = tamanhoRecebido;
+                                        indicacaoDeRecebimento[valorMovido] = true;//sinaliza recebimento
+                                        numeroRecebido = numeroRecebido+1;
+                                        if (numeroRecebido>=quantiaBuffers){
+                                            //ja recebeu quantiaBuffers pacotes, escreve os quantiaBuffers pacotes e prescissa receber proximos 10
+                                            for (int i=0;i<indicacaoDeRecebimento.length;i++){
+                                                indicacaoDeRecebimento[i] = false;
+                                            }
+                                            //System.out.println("escrevendo "+quantiaBuffers+" pacotes");
+                                            for (int i=0;i<indicacaoDeRecebimento.length;i++){
+                                                out.write(bufferDeRecebimento[i],4,tamanhoReal[i]);
+                                                tamanhoAcumulado = tamanhoAcumulado+tamanhoReal[i];
+                                            }
+                                            numeroRecebido = 0;
+                                            maximo = maximo+quantiaBuffers;
+                                            System.arraycopy(ack, 0, ackByte, 0, ack.length);
+                                            clientSocket.send(pacoteDeAck);
                                         }
-                                        //System.out.println("escrevendo "+quantiaBuffers+" pacotes");
-                                        for (int i=0;i<indicacaoDeRecebimento.length;i++){
-                                            out.write(bufferDeRecebimento[i],4,tamanhoReal[i]);
-                                            tamanhoAcumulado = tamanhoAcumulado+tamanhoReal[i];
-                                        }
-                                        numeroRecebido = 0;
-                                        maximo = maximo+quantiaBuffers;
-                                        System.arraycopy(ack, 0, ackByte, 0, ack.length);
-                                        clientSocket.send(pacoteDeAck);
                                     }
                                 }
                             }
-                        }
-                    }catch(SocketTimeoutException e){
-                        if (estadoFinal){
-                            throw e;
-                        }else{
-                            contadorDeRetransmissoes = contadorDeRetransmissoes+1;
-                            if (contadorDeRetransmissoes>=maxNumeroDeRetransmissaoDeAcks){
-                                estadoFinal = true;
-                            }
-                            if (!(nackMontado)){//monta pacote NCK
-                                //pedir retransmissao de pacotes nao encontrados
-                                System.arraycopy(nck, 0, ackByte, 0, nck.length);
-                                int pacotesRestante = quantiaBuffers-numeroRecebido;
-                                pacotesRetransmitidos = pacotesRetransmitidos + pacotesRestante;
-                                //System.out.println("ainda faltam "+pacotesRestante);
-                                wrapper.clear();
-                                wrapper.putInt(pacotesRestante);
-                                byte[] pacotesR = wrapper.array();
-                                System.arraycopy(pacotesR, 0, ackByte, nck.length, pacotesR.length);
-                                int count = 0;
-                                for (int i=0;i<indicacaoDeRecebimento.length;i++){
-                                    if (!(indicacaoDeRecebimento[i])){
-                                        //System.out.println("falta pacote " + i);
-                                        wrapper.clear();
-                                        wrapper.putInt(i);
-                                        byte[] array = wrapper.array();
-                                        //System.out.println("gravando int na pos inicial : " + (nck.length+pacotesR.length+count*4) + ",valor = " + ByteBuffer.wrap(array).getInt());
-                                        System.arraycopy(array,0,ackByte,nck.length+pacotesR.length+count*4,array.length);
-                                        count = count+1;
-                                    }
-                                }
-                                clientSocket.send(pacoteDeAck);
-                                nackMontado = true;
+                        }catch(SocketTimeoutException e){
+                            if (estadoFinal){
+                                throw e;
                             }else{
-                                //System.out.println("retransmitindo nack");
-                                clientSocket.send(pacoteDeAck);
+                                contadorDeRetransmissoes = contadorDeRetransmissoes+1;
+                                if (contadorDeRetransmissoes>=maxNumeroDeRetransmissaoDeAcks){
+                                    estadoFinal = true;
+                                }
+                                if (!(nackMontado)){//monta pacote NCK
+                                    //pedir retransmissao de pacotes nao encontrados
+                                    System.arraycopy(nck, 0, ackByte, 0, nck.length);
+                                    int pacotesRestante = quantiaBuffers-numeroRecebido;
+                                    pacotesRetransmitidos = pacotesRetransmitidos + pacotesRestante;
+                                    //System.out.println("ainda faltam "+pacotesRestante);
+                                    wrapper.clear();
+                                    wrapper.putInt(pacotesRestante);
+                                    byte[] pacotesR = wrapper.array();
+                                    System.arraycopy(pacotesR, 0, ackByte, nck.length, pacotesR.length);
+                                    int count = 0;
+                                    for (int i=0;i<indicacaoDeRecebimento.length;i++){
+                                        if (!(indicacaoDeRecebimento[i])){
+                                            //System.out.println("falta pacote " + i);
+                                            wrapper.clear();
+                                            wrapper.putInt(i);
+                                            byte[] array = wrapper.array();
+                                            //System.out.println("gravando int na pos inicial : " + (nck.length+pacotesR.length+count*4) + ",valor = " + ByteBuffer.wrap(array).getInt());
+                                            System.arraycopy(array,0,ackByte,nck.length+pacotesR.length+count*4,array.length);
+                                            count = count+1;
+                                        }
+                                    }
+                                    clientSocket.send(pacoteDeAck);
+                                    nackMontado = true;
+                                }else{
+                                    //System.out.println("retransmitindo nack");
+                                    clientSocket.send(pacoteDeAck);
+                                }
                             }
                         }
                     }
-                }
                 endTime = System.nanoTime();
                 double elapsedSegundos = (endTime-startTime+0.00)/1000000000.0;
                 double retransmissaoPercentagem = ((pacotesRetransmitidos+0.00)/(pacotesValidos+0.00))*100;
@@ -446,8 +454,13 @@ public class ConexaoUDP {
                 //System.out.println("PacotesTotal : " + (pacotesValidos+pacotesRetransmitidos) + ",PacotesValidos : " +pacotesValidos+ ",PacotesRetransmitidos : " +pacotesRetransmitidos+ ",Porcetagem Retransmitida(Em relação a pacotes validos) : " + String.format("%.2f %%", retransmissaoPercentagem));
                 retorno.add(elapsedSegundos);
                 retorno.add(retransmissaoPercentagem);
+                return(retorno);
+                }else{
+                    //System.out.println("Recebeu msg : " + sCodigo);
+                    System.out.println("retransmissao okay");
+                }
             }
-            return(retorno);
+            return(new Integer(-2));
         }catch(SocketTimeoutException e){
             return(new Integer(-1));
         }catch(Exception e){
