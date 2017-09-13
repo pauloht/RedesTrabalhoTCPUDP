@@ -19,6 +19,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 /**
@@ -139,16 +140,21 @@ public class ConexaoTCP {
             int bytesRead;
             byte[] linhaLida = new byte[tamanhoBuffer];
             int contador = 0;
+            int contadorDePacotes = 0;
             do{
                 bytesRead = in.read(linhaLida);
+                contadorDePacotes = contadorDePacotes+1;
                 if (bytesRead>0){
                     out.write(linhaLida, 0, bytesRead);
                     //System.out.println("lendo linha "+contador);
                     contador++;
                 }
             }while(bytesRead > -1);
-            Double elapsedTime = (System.nanoTime()+0.00-startTime+0.00)/1000000000;
-            return(elapsedTime);
+            ArrayList< Object > retornoArray = new ArrayList<>();
+            double elapsedTime = (System.nanoTime()+0.00-startTime+0.00)/1000000000;
+            retornoArray.add(elapsedTime);
+            retornoArray.add(contadorDePacotes);
+            return(retornoArray);
         } catch (Exception ex) {
             System.out.println("caiu em exception");
             Logger.getLogger("tcp").log(Level.SEVERE, null, ex);

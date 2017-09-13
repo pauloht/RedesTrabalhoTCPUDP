@@ -458,9 +458,13 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                     contadorDeFalhasSucessivas = 5;
                     double tempo = (double)array.get(2);
                     double retrans = (double)array.get(3);
+                    int numeroDePacotes = (int)array.get(4);
                     UDPDataEstatistica newData = new UDPDataEstatistica(tempo, retrans);
                     udpArray.add(newData);
                     retransmissoes = retransmissoes-1;
+                    System.out.println("tempo : " + String.format("%.8f",tempo)+"seg");
+                    System.out.println("Retransmissao : " + String.format("%.2f %%", retrans));
+                    System.out.println("Numero de pacotes : " + numeroDePacotes);
                     if (retransmissoes<=0){
                         double[] datas = UDPDataEstatistica.gerarMedidas(udpArray);
                         double mediatempo = datas[0];
@@ -469,8 +473,8 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                         //double desvioPRetrans = datas[3];
                         double nivelDeConfTempo = 1.96*desvioTempo/(Math.sqrt(retransmissoesBuffer));
                         double erroMaximo = 0.00;
-                        if (desvioTempo >= 0.00000001){
-                            erroMaximo = 100.0*(nivelDeConfTempo/desvioTempo);
+                        if (mediatempo >= 0.00000001){
+                            erroMaximo = 100.0*(nivelDeConfTempo/mediatempo);
                         }
                         System.out.println("Numero de repetições : " + retransmissoesBuffer + ",Media tempo : " + String.format("%.8f", mediatempo) + " seg\nMedia retransmissao : " + String.format("%.8f %%", mediaRetrans) + "\nDesvio tempo : " + String.format("%.8f", desvioTempo) + "\nIntervalo de confiança retransmissao: " + String.format("%.8f",mediatempo) + "+/- " + String.format("%.8f",nivelDeConfTempo) + ",Erro maximo : " + String.format("%.8f",erroMaximo) + "%");
                         if (erroMaximo >= 10){
@@ -502,8 +506,10 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                 boolean sucessoDownload = (boolean)array.get(1);
                 if (sucessoDownload){
                     double tempo = (double)array.get(2);
+                    int numeroDePacotes = (int)array.get(3);
                     System.out.println("Tempo : " + String.format("%.8f", tempo));
                     System.out.println("falta : " + retransmissoes);
+                    System.out.println("Numero de pacotes : " + numeroDePacotes);
                     UDPDataEstatistica newData = new UDPDataEstatistica(tempo, 0.0);
                     udpArray.add(newData);
                     retransmissoes = retransmissoes-1;
@@ -515,7 +521,7 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                         //double desvioPRetrans = datas[3];
                         double nivelDeConfTempo = 1.96*desvioTempo/(Math.sqrt(retransmissoesBuffer));
                         double erroMaximo = 0.00;
-                        if (desvioTempo >= 0.00000001){
+                        if (mediatempo >= 0.00000001){
                             erroMaximo = 100.0*(nivelDeConfTempo/mediatempo);
                         }
                         System.out.println("Numero de repetições : " + retransmissoesBuffer + "\nMedia tempo : " + String.format("%.8f", mediatempo) + " seg" + "\nDesvio tempo : " + String.format("%.8f", desvioTempo) + "\nIntervalo de confiança retransmissao: " + String.format("%.8f",mediatempo) + "+/- " + String.format("%.8f",nivelDeConfTempo) + ",Erro maximo : " + String.format("%.8f",erroMaximo) + "%");

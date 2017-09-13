@@ -15,7 +15,10 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  *
@@ -74,7 +77,7 @@ public class ConexaoUDP {
             while (true){
                 //esperar uma solicitação
                 try{
-                    System.out.println("esperando cliente");
+                    //System.out.println("esperando cliente");
                     serverSocket.receive(receivePacket);
                     String msgRecebida = new String(receivePacket.getData());
                     System.out.println("msg recebida do cliente = " + msgRecebida);
@@ -112,7 +115,9 @@ public class ConexaoUDP {
                         Thread t1 = new Thread(){
                             @Override
                             public void run(){
-                                System.out.println("thread start");
+                                DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                                Date date = new Date();
+                                System.out.println(dateFormat.format(date));
                                 DatagramSocket threadServerSocket = null;
                                 try{
 
@@ -449,11 +454,11 @@ public class ConexaoUDP {
                 double elapsedSegundos = (endTime-startTime+0.00)/1000000000.0;
                 double retransmissaoPercentagem = ((pacotesRetransmitidos+0.00)/(pacotesValidos+0.00))*100;
                 //System.out.println("tamanho escrito = " + tamanhoAcumulado+"bytes");
-                System.out.println("tempo : " + String.format("%.8f",elapsedSegundos)+"seg");
-                System.out.println("Retransmissao : " + String.format("%.2f %%", retransmissaoPercentagem));
                 //System.out.println("PacotesTotal : " + (pacotesValidos+pacotesRetransmitidos) + ",PacotesValidos : " +pacotesValidos+ ",PacotesRetransmitidos : " +pacotesRetransmitidos+ ",Porcetagem Retransmitida(Em relação a pacotes validos) : " + String.format("%.2f %%", retransmissaoPercentagem));
                 retorno.add(elapsedSegundos);
                 retorno.add(retransmissaoPercentagem);
+                int pacotesTotal = pacotesValidos+pacotesRetransmitidos;
+                retorno.add(pacotesTotal);
                 return(retorno);
                 }else{
                     //System.out.println("Recebeu msg : " + sCodigo);
