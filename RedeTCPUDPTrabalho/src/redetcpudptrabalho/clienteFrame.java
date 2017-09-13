@@ -568,11 +568,12 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                     boolean ocorreuErro = false;
                     try{
                         Object ret = conex.solicitarPedido(tfIP.getText(), portaValor, fileBuffer, threadInterruptFlag);
-                        if (ret instanceof Double){
-                            Double retorno = (Double)ret;
+                        if (ret instanceof ArrayList){
+                            ArrayList retorno = (ArrayList)ret;
                             if (!(retorno==null)){
                                 arg.add(true);
-                                arg.add(retorno);
+                                arg.add(retorno.get(0));
+                                arg.add(retorno.get(1));
                             }else{
                                 lbInfo.setText("Erro!");
                                 ocorreuErro = true;
@@ -603,10 +604,12 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                             Integer resposta = (Integer)ret;
                             if(resposta==-1){//timeout
                                 lbInfo.setText("Timeout!");
+                                System.out.println("TIMEOUT");
                                 ocorreuErro = true;
                             }else{
                                 lbInfo.setText("Erro!");//outroerro
                                 ocorreuErro = true;
+                                System.out.println("ERRO DESCONHECIDO");
                             }
                         }else{//retorno arraylist
                             arg.add(true);
