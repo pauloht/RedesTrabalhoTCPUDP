@@ -594,7 +594,6 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                             }
                         }else{//retorno arraylist
                             arg.add(true);
-                            System.out.println("erro?");
                             ArrayList resposta = (ArrayList)ret;
                             arg.add(resposta.get(0));
                             arg.add(resposta.get(1));
