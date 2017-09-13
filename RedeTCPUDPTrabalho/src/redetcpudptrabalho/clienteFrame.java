@@ -484,6 +484,7 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                         udpArray = new ArrayList<>();
                     }else{
                         System.out.println("falta : " + retransmissoes);
+                        iniciarConexaoServidor();
                     }
                 }else{
                     if (contadorDeFalhasSucessivas<0){
@@ -494,6 +495,7 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                     }else{
                         System.out.println("FALHOU");
                         contadorDeFalhasSucessivas = contadorDeFalhasSucessivas-1;
+                        iniciarConexaoServidor();
                     }
                 }
             }else if(primeiraMsg.equals("fimtcp")){
