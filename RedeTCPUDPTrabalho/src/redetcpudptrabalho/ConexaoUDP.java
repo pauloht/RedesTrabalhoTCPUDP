@@ -333,7 +333,7 @@ public class ConexaoUDP {
                     byte[] fin = "FIN".getBytes();
                     ByteBuffer wrapper = ByteBuffer.allocate(4);
                     int contadorDeRetransmissoes = 0;
-                    int maxNumeroDeRetransmissaoDeAcks = 10;
+                    int maxNumeroDeRetransmissaoDeAcks = 100;
                     boolean nackMontado = false;
                     serverSocket.setSoTimeout(100);
                     int tamanhoRecebido = 0;
