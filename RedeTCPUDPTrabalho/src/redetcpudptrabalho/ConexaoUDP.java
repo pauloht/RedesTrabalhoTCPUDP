@@ -296,6 +296,7 @@ public class ConexaoUDP {
                 String sCodigo = new String(codigo);
                 ArrayList<Object> retorno = new ArrayList<>();
                 if (sCodigo.equals("Okay")){
+                    System.out.println("Okay recebido iniciando transmissao ....");
                     long startTime = System.nanoTime();
                     //leitura do tamanho do nome do arquivo
                     byte[] tamNome = new byte[4];
@@ -465,7 +466,7 @@ public class ConexaoUDP {
                     System.out.println("retransmissao okay");
                 }
             }
-            return(new Integer(-2));
+            return(new Integer(-3));
         }catch(SocketTimeoutException e){
             return(new Integer(-1));
         }catch(Exception e){

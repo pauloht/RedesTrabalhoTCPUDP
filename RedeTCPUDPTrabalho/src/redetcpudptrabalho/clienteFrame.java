@@ -497,7 +497,7 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                         retransmissoes = 0;
                         udpArray = new ArrayList<>();
                     }else{
-                        System.out.println("FALHOU");
+                        System.out.println("FALHOU, tentativas restantes : "+ contadorDeFalhasSucessivas);
                         contadorDeFalhasSucessivas = contadorDeFalhasSucessivas-1;
                         iniciarConexaoServidor();
                     }
@@ -606,10 +606,12 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                                 lbInfo.setText("Timeout!");
                                 System.out.println("TIMEOUT");
                                 ocorreuErro = true;
-                            }else{
+                            }else if(resposta==-2){
                                 lbInfo.setText("Erro!");//outroerro
                                 ocorreuErro = true;
                                 System.out.println("ERRO DESCONHECIDO");
+                            }else{
+                                System.out.println("TIMEOUTCUMPRIMENTO");
                             }
                         }else{//retorno arraylist
                             arg.add(true);
@@ -617,6 +619,7 @@ public class clienteFrame extends javax.swing.JFrame implements Observer{
                             //System.out.println("recebido : " + resposta);
                             arg.add(resposta.get(0));
                             arg.add(resposta.get(1));
+                            arg.add(resposta.get(2));
                         }
                     }catch(Exception e){
                         e.printStackTrace();
